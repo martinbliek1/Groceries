@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Courses</title>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Courses">
+<style>
+:root{
+  --bg:#F2F2F7; --surface:#FFFFFF; --ink:#1C1C1E; --muted:#6C6C70; --line:#D1D1D6; --track:#AEAEB2;
+  --route:#007AFF; --on-route:#FFFFFF; --mark:#007AFF; --mark-ink:#FFFFFF; --danger:#B3261E; --fill:#E3E3E8;
+  --radius:12px;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000; --surface:#1C1C1E; --ink:#FFFFFF; --muted:#98989D; --line:#38383A; --track:#636366;
+    --route:#0A84FF; --on-route:#FFFFFF; --mark:#0A84FF; --mark-ink:#FFFFFF; --danger:#F2867D; --fill:#2C2C2E;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#1C1C1E; --ink:#FFFFFF; --muted:#98989D; --line:#38383A; --track:#636366;
+  --route:#0A84FF; --on-route:#FFFFFF; --mark:#0A84FF; --mark-ink:#FFFFFF; --danger:#F2867D; --fill:#2C2C2E;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:17px;line-height:1.4}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--route);outline-offset:2px}
+[hidden]{display:none !important}
+body:not(.has-ai) .ai{display:none !important}
+
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+.top{padding:22px 0 4px}
+.top h1{margin:0;font-size:2.4rem;font-weight:700;letter-spacing:-0.03em;line-height:1}
+.top p{margin:8px 0 0;color:var(--muted)}
+main{padding-bottom:calc(124px + env(safe-area-inset-bottom,0px))}
+
+.seg{display:flex;gap:4px;background:var(--fill);border:0;border-radius:999px;padding:4px;margin:16px 0 12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5}
+.seg button{flex:1;border:0;background:transparent;font:inherit;font-weight:600;color:var(--muted);padding:9px 12px;border-radius:999px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+.addrow{display:flex;gap:8px;align-items:stretch}
+input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:0;width:100%}
+textarea{resize:vertical;line-height:1.5}
+select{appearance:auto}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:600;border-radius:999px;padding:10px 18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);white-space:nowrap}
+.btn.primary{background:var(--route);border-color:var(--route);color:var(--on-route)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.danger{background:transparent;border-color:transparent;color:var(--danger);margin-right:auto;padding-left:0}
+.btn.small{padding:6px 14px;font-size:.92rem}
+.btn[disabled]{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hint{color:var(--muted);font-size:.95rem;margin:8px 0}
+
+/* The route: one line through the store, a stop per aisle */
+.route{list-style:none;margin:20px 0 8px;padding:0;position:relative}
+.route::before{content:"";position:absolute;left:10px;top:12px;bottom:12px;width:4px;border-radius:2px;background:var(--track)}
+.stop{position:relative;padding-left:38px;margin-bottom:20px}
+.dot{position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--bg);border:4px solid var(--track)}
+.stop-head{display:flex;align-items:baseline;gap:10px;min-height:26px}
+.stop h2{margin:0;font-size:1.08rem;font-weight:700;letter-spacing:-0.01em}
+.count{font-size:.9rem;font-weight:600;color:var(--muted)}
+.stop.done .dot{background:var(--track)}
+.stop.done h2{color:var(--muted)}
+.stop.empty{margin-bottom:10px}
+.stop.empty .dot{left:6px;top:4px;width:12px;height:12px;border-width:3px}
+.stop.empty h2{font-size:.95rem;font-weight:600;color:var(--muted)}
+
+.items{list-style:none;margin:8px 0 0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.item{display:flex;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.tick{flex:1;display:flex;align-items:center;gap:12px;min-height:54px;padding:10px 14px;border:0;background:none;font:inherit;color:inherit;text-align:left;min-width:0}
+.box{flex:none;position:relative;width:24px;height:24px;border-radius:7px;border:2px solid var(--muted);transition:background-color .15s,border-color .15s}
+.item.on .box{background:var(--mark);border-color:var(--mark)}
+.item.on .box::after{content:"";position:absolute;left:6px;top:1px;width:7px;height:13px;border:solid var(--mark-ink);border-width:0 3px 3px 0;transform:rotate(45deg)}
+.label{display:flex;flex-direction:column;min-width:0}
+.name{font-weight:600;overflow-wrap:anywhere}
+.why{font-size:.84rem;color:var(--muted)}
+.item.got .name{font-weight:400;color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px}
+.item.got .box{border-color:var(--line)}
+.more{flex:none;width:52px;border:0;border-left:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:1.3rem;line-height:1}
+
+.empty-state{background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:20px;margin-top:20px}
+.empty-state h2{margin:0 0 6px;font-size:1.15rem;font-weight:700}
+.empty-state p{margin:0;color:var(--muted)}
+.foot{margin-top:8px}
+
+/* Meals */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.bar p{margin:0;font-weight:700;font-size:1.1rem}
+.meals{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.meal{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.meal.on{box-shadow:inset 4px 0 0 var(--mark)}
+.meal-toggle{flex:1;display:flex;align-items:flex-start;gap:12px;padding:14px;border:0;background:none;font:inherit;color:inherit;text-align:left;min-width:0}
+.meal-mark{flex:none;position:relative;width:24px;height:24px;margin-top:1px;border-radius:50%;border:2px solid var(--muted);transition:background-color .15s,border-color .15s}
+.meal.on .meal-mark{background:var(--mark);border-color:var(--mark)}
+.meal.on .meal-mark::after{content:"";position:absolute;left:6px;top:1px;width:7px;height:13px;border:solid var(--mark-ink);border-width:0 3px 3px 0;transform:rotate(45deg)}
+.meal-text{min-width:0}
+.meal-name{display:block;font-weight:700}
+.meal-ings{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.88rem;color:var(--muted);margin-top:2px}
+.meal-edit{flex:none;border:0;border-left:1px solid var(--line);background:none;color:var(--route);font:inherit;font-weight:600;padding:0 14px}
+
+/* Planning */
+.days{display:grid;grid-auto-flow:column;grid-auto-columns:46%;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:14px -16px 0;padding:0 16px 12px;scroll-padding:0 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.days::-webkit-scrollbar{display:none}
+@media (min-width:520px){.days{grid-auto-columns:31%}}
+.day{scroll-snap-align:start;display:flex;flex-direction:column;gap:8px;min-width:0}
+.day h2{margin:0 0 2px;font-size:1.05rem;font-weight:700}
+.day h2 small{display:block;font-size:.85rem;font-weight:400;color:var(--muted)}
+.slot{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px 10px;min-height:84px}
+.slot-k{font-size:.8rem;font-weight:600;color:var(--muted)}
+.slot-v{font-weight:600;margin-top:2px;overflow-wrap:anywhere;line-height:1.3}
+.slot-n{font-size:.8rem;color:var(--muted);margin-top:2px}
+.slot .pick{color:var(--route)}
+.slot.left .slot-v{font-weight:400}
+.slot.off{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:transparent;border-style:dashed;min-height:0;cursor:pointer}
+.slot.off .slot-v{font-weight:400;color:var(--muted)}
+.slot select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;padding:0;border:0}
+.slot:focus-within{outline:3px solid var(--route);outline-offset:2px}
+.plan-set{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:0 14px}
+.plan-set summary{font-weight:600;padding:12px 0;cursor:pointer}
+.pending{margin-top:12px;background:var(--surface);border:1px solid var(--route);border-radius:var(--radius);padding:12px 14px}
+.pending h2{margin:0 0 4px;font-size:1rem;font-weight:700}
+.meal-when{display:block;font-size:.88rem;font-weight:600;color:var(--route);margin-top:2px}
+
+/* Aisles */
+.aisles{list-style:none;margin:16px 0 0;padding:0;position:relative}
+.aisles::before{content:"";position:absolute;left:10px;top:22px;bottom:22px;width:4px;border-radius:2px;background:var(--track)}
+.aisle{position:relative;display:flex;align-items:center;gap:6px;padding-left:38px;margin-bottom:8px}
+.aisle .dot{top:50%;transform:translateY(-50%)}
+.icon-btn{flex:none;width:44px;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:1.05rem;display:inline-flex;align-items:center;justify-content:center}
+.icon-btn[disabled]{opacity:.35;cursor:default}
+.sync{font-size:.9rem;color:var(--muted);margin-top:24px}
+
+/* Bottom navigation */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 18px)}
+.nav-in{max-width:560px;margin:0 auto;display:flex}
+.nav button{flex:1;position:relative;border:0;background:none;font:inherit;font-size:.95rem;font-weight:600;color:var(--muted);padding:16px 4px 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.nav button[aria-selected="true"]{color:var(--route)}
+.badge{min-width:22px;height:22px;padding:1px 6px;border-radius:999px;background:var(--fill);color:var(--ink);font-size:.8rem;font-weight:700;line-height:20px;text-align:center}
+
+.toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:30;width:max-content;max-width:min(520px,calc(100% - 32px));background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;opacity:0;transform:translate(-50%,16px);transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Bottom sheet */
+dialog.sheet{border:0;padding:0;margin:auto auto 0;width:100%;max-width:560px;max-height:90vh;max-height:90dvh;overflow:auto;border-radius:18px 18px 0 0;background:var(--surface);color:var(--ink)}
+dialog.sheet::backdrop{background:rgba(4,12,8,.5)}
+.sheet-in{padding:22px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet-in h2{margin:0 0 16px;font-size:1.35rem;font-weight:700;letter-spacing:-0.01em;outline:none}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field > span{font-size:.9rem;font-weight:600;color:var(--muted)}
+.check{display:flex;align-items:flex-start;gap:10px;margin:4px 0 12px}
+.check input{flex:none;width:22px;height:22px;margin:0;accent-color:var(--route)}
+.check small{color:var(--muted)}
+.err{color:var(--danger);margin:6px 0 0;min-height:1.2em;font-size:.95rem}
+.sheet-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;background:var(--bg);font-size:.95rem}
+.chip small{color:var(--muted)}
+.chip button{border:0;background:none;color:var(--muted);font:inherit;font-size:1.15rem;line-height:1;padding:2px 6px 4px}
+.chip.sugg{border-style:dashed;padding:6px 12px;color:var(--ink);font:inherit;font-size:.95rem}
+.ai-box{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);flex-direction:column;align-items:flex-start}
+body.has-ai .ai-box{display:flex}
+.ideas{display:flex;flex-direction:column;gap:10px}
+.idea{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:var(--bg)}
+.idea h3{margin:0 0 4px;font-size:1.05rem;font-weight:700}
+.idea p{margin:0 0 10px;color:var(--muted);font-size:.92rem}
+.preview p{margin:6px 0}
+
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Courses</h1>
+    <p id="summary" aria-live="polite"></p>
+  </header>
+  <main>
+    <section id="view-list" aria-label="Liste de courses">
+      <div class="seg" role="group" aria-label="Affichage de la liste">
+        <button type="button" data-act="mode" data-mode="route" aria-pressed="true">À acheter</button>
+        <button type="button" data-act="mode" data-mode="all" aria-pressed="false">Catalogue</button>
+      </div>
+      <div class="addrow">
+        <input type="text" id="qa" list="itemlist" placeholder="Ajouter à la liste…" autocomplete="off" enterkeyhint="done" aria-label="Ajouter un produit à la liste">
+        <button class="btn primary" type="button" data-act="quick-add">Ajouter</button>
+      </div>
+      <ol class="route" id="route"></ol>
+      <div class="empty-state" id="list-empty" hidden></div>
+      <div class="foot" id="list-foot"></div>
+    </section>
+
+    <section id="view-plan" aria-label="Planning" hidden>
+      <p class="hint">Glisse vers la gauche pour voir les jours suivants. Touche un matin ou un midi grisé pour le rendre disponible. Les réglages sont juste en dessous.</p>
+      <details class="plan-set">
+        <summary>Réglages du planning</summary>
+        <label class="check"><input type="checkbox" id="set-link"><span>Lier à la liste de courses<br><small>Les repas du planning cochent leurs ingrédients. Décoché, le planning ne touche à rien d'autre.</small></span></label>
+        <label class="check"><input type="checkbox" id="set-auto"><span>Placer les restes automatiquement<br><small>Au prochain créneau libre, jusqu'à 2 jours après. Décoché, ils attendent dans « Portions à placer ».</small></span></label>
+        <button class="btn small" type="button" data-act="clear-plan" style="margin:0 0 12px">Vider le planning</button>
+      </details>
+      <div class="pending" id="pending" hidden></div>
+      <div class="days" id="days"></div>
+    </section>
+
+    <section id="view-meals" aria-label="Repas" hidden>
+      <div class="bar">
+        <p id="week-label"></p>
+        <button class="btn small" type="button" data-act="new-week" id="new-week">Retirer les repas sans jour</button>
+      </div>
+      <p class="hint">Pour prévoir un repas un jour précis, passe par le Planning. Toucher un repas ici l'ajoute sans jour : ses ingrédients sont cochés dans ta liste.</p>
+      <ul class="meals" id="meal-list"></ul>
+      <div class="row">
+        <button class="btn primary" type="button" data-act="new-meal">Nouveau repas</button>
+        <button class="btn ai" type="button" data-act="ideas">Des idées de repas</button>
+      </div>
+    </section>
+
+    <section id="view-aisles" aria-label="Rayons" hidden>
+      <p class="hint">Range les rayons dans l'ordre où tu les traverses dans ton magasin. Ta liste suit exactement ce trajet.</p>
+      <ol class="aisles" id="aisle-list"></ol>
+      <div class="addrow" style="margin-top:12px">
+        <input type="text" id="new-aisle" placeholder="Nouveau rayon" autocomplete="off" aria-label="Nom du nouveau rayon">
+        <button class="btn" type="button" data-act="add-aisle">Ajouter</button>
+      </div>
+      <p class="sync" id="sync"></p>
+    </section>
+  </main>
+</div>
+
+<nav class="nav" aria-label="Sections">
+  <div class="nav-in" role="tablist">
+    <button type="button" role="tab" data-act="tab" data-tab="list" aria-selected="true">Liste <span class="badge" id="badge-list" hidden></span></button>
+    <button type="button" role="tab" data-act="tab" data-tab="plan" aria-selected="false">Planning</button>
+    <button type="button" role="tab" data-act="tab" data-tab="meals" aria-selected="false">Repas <span class="badge" id="badge-meals" hidden></span></button>
+    <button type="button" role="tab" data-act="tab" data-tab="aisles" aria-selected="false">Rayons</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog class="sheet" id="sheet" aria-label="Détails"><div class="sheet-in" id="sheet-in"></div></dialog>
+<datalist id="itemlist"></datalist>
+
+<script>
+(function(){
+"use strict";
+
+var LS_KEY = "courses-trajet:v1";
+var DIVERS = "a-divers";
+var DEFAULT_AISLES = [
+  {id:"a-fl",name:"Fruits et légumes"},{id:"a-boul",name:"Boulangerie"},{id:"a-viande",name:"Boucherie et volaille"},
+  {id:"a-poisson",name:"Poissonnerie"},{id:"a-traiteur",name:"Charcuterie et traiteur"},{id:"a-cremerie",name:"Crèmerie et œufs"},
+  {id:"a-fromage",name:"Fromages"},{id:"a-sale",name:"Épicerie salée"},{id:"a-epices",name:"Huiles, épices et condiments"},
+  {id:"a-sucre",name:"Épicerie sucrée et petit-déj"},{id:"a-boissons",name:"Boissons"},{id:"a-surgeles",name:"Surgelés"},
+  {id:"a-hygiene",name:"Hygiène"},{id:"a-entretien",name:"Entretien"},{id:"a-divers",name:"Divers"}
+];
+
+function $(s){ return document.querySelector(s); }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function uid(p){ return p + "-" + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-3); }
+function cap(s){ s = String(s || "").trim(); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function plural(n, one, many){ return n > 1 ? many : one; }
+function norm(str){
+  return String(str || "").toLowerCase().replace(/œ/g,"oe").replace(/æ/g,"ae")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]+/g," ")
+    .split(/\s+/).filter(Boolean).map(function(w){ return w.length > 3 ? w.replace(/(s|x)$/,"") : w; }).join(" ");
+}
+
+/* ---------- State ---------- */
+function blank(){ return {v:1,updatedAt:0,aisles:DEFAULT_AISLES.map(function(a){return {id:a.id,name:a.name};}),items:[],meals:[],planned:[],plan:{},open:{},settings:{linkPlan:false,autoLeft:true},need:{}}; }
+
+function remap(s, from, to){
+  s.meals.forEach(function(m){
+    var seen = {}; m.items = m.items.map(function(x){ return x === from ? to : x; }).filter(function(x){ if (seen[x]) return false; seen[x] = 1; return true; });
+  });
+  if (s.need[from]) {
+    var merged = (s.need[to] || []).slice();
+    s.need[from].forEach(function(x){ if (merged.indexOf(x) < 0) merged.push(x); });
+    s.need[to] = merged; delete s.need[from];
+  }
+}
+function dedupe(s){
+  var seen = {}, keep = [];
+  s.items.forEach(function(it){
+    var k = norm(it.name);
+    if (!k) return;
+    if (seen[k]) { remap(s, it.id, seen[k].id); seen[k].staple = seen[k].staple || it.staple; }
+    else { seen[k] = it; keep.push(it); }
+  });
+  s.items = keep;
+}
+function sanitize(raw){
+  var s = (raw && typeof raw === "object") ? raw : {};
+  var out = {v:1, updatedAt: typeof s.updatedAt === "number" ? s.updatedAt : 0};
+  out.aisles = Array.isArray(s.aisles) ? s.aisles.filter(function(a){ return a && a.id && typeof a.name === "string"; }).map(function(a){ return {id:String(a.id), name:a.name}; }) : [];
+  if (!out.aisles.length) out.aisles = blank().aisles;
+  if (!out.aisles.some(function(a){ return a.id === DIVERS; })) out.aisles.push({id:DIVERS, name:"Divers"});
+  var aisleIds = {}; out.aisles.forEach(function(a){ aisleIds[a.id] = 1; });
+  out.items = Array.isArray(s.items) ? s.items.filter(function(i){ return i && i.id && typeof i.name === "string" && i.name.trim(); })
+    .map(function(i){ return {id:String(i.id), name:i.name.trim(), aisle: aisleIds[i.aisle] ? i.aisle : DIVERS, staple: !!i.staple}; }) : [];
+  var itemIds = {}; out.items.forEach(function(i){ itemIds[i.id] = 1; });
+  out.meals = Array.isArray(s.meals) ? s.meals.filter(function(m){ return m && m.id && typeof m.name === "string"; }).map(function(m){
+    var seen = {}; var its = (Array.isArray(m.items) ? m.items : []).filter(function(x){ if (!itemIds[x] || seen[x]) return false; seen[x] = 1; return true; });
+    return {id:String(m.id), name:m.name, items:its, serves: m.serves === 1 ? 1 : 2};
+  }) : [];
+  var mealIds = {}; out.meals.forEach(function(m){ mealIds[m.id] = 1; });
+  var pseen = {};
+  out.planned = (Array.isArray(s.planned) ? s.planned : []).filter(function(x){ if (!mealIds[x] || pseen[x]) return false; pseen[x] = 1; return true; });
+  out.plan = {};
+  if (s.plan && typeof s.plan === "object") {
+    Object.keys(s.plan).forEach(function(k){
+      var v = s.plan[k];
+      if (!/^\d{4}-\d{2}-\d{2}\|(matin|midi|soir)$/.test(k) || !v || !mealIds[v.m]) return;
+      out.plan[k] = v.left ? {m:v.m, left:String(v.left)} : (v.one ? {m:v.m, one:true} : {m:v.m});
+    });
+  }
+  var st = (s.settings && typeof s.settings === "object") ? s.settings : {};
+  out.settings = {linkPlan: st.linkPlan === true, autoLeft: st.autoLeft !== false};
+  out.open = {};
+  if (s.open && typeof s.open === "object") Object.keys(s.open).forEach(function(k){ if (/^\d{4}-\d{2}-\d{2}\|(matin|midi)$/.test(k) && s.open[k]) out.open[k] = true; });
+  out.need = {};
+  if (s.need && typeof s.need === "object") {
+    Object.keys(s.need).forEach(function(k){
+      var v = s.need[k];
+      if (!itemIds[k] || !Array.isArray(v)) return;
+      var src = []; v.forEach(function(x){ if ((x === "m" || mealIds[x]) && src.indexOf(x) < 0) src.push(x); });
+      if (src.length) out.need[k] = src;
+    });
+  }
+  dedupe(out);
+  return out;
+}
+function loadLocal(){ try { var raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
+function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+
+var SEED = {"aisles": [{"id": "a-boulangerie", "name": "Boulangerie"}, {"id": "a-fruits", "name": "Fruits"}, {"id": "a-legumes", "name": "Légumes"}, {"id": "a-pates-fraiches", "name": "Pâtes fraîches"}, {"id": "a-jambon", "name": "Jambon"}, {"id": "a-lardons", "name": "Lardons"}, {"id": "a-viandes", "name": "Viandes"}, {"id": "a-poisson", "name": "Poisson"}, {"id": "a-traiteur-apero", "name": "Traiteur apéro"}, {"id": "a-oeufs", "name": "Œufs"}, {"id": "a-barres-de-cereales", "name": "Barres de céréales"}, {"id": "a-frigo-fromages", "name": "Frigo fromages"}, {"id": "a-cereales-et-petit-dej", "name": "Céréales et petit-déj"}, {"id": "a-conserves", "name": "Conserves"}, {"id": "a-huiles-et-vinaigres", "name": "Huiles et vinaigres"}, {"id": "a-pates-et-sauces", "name": "Pâtes et sauces"}, {"id": "a-desserts-gourmands", "name": "Desserts gourmands"}, {"id": "a-pq-et-sopalin", "name": "PQ et sopalin"}, {"id": "a-entretien", "name": "Entretien"}, {"id": "a-chips-et-apero", "name": "Chips et apéro"}, {"id": "a-yaourts", "name": "Yaourts"}, {"id": "a-surgeles", "name": "Surgelés"}, {"id": "a-lait", "name": "Lait"}, {"id": "a-boissons", "name": "Boissons"}, {"id": "a-bazar-maison", "name": "Bazar maison"}, {"id": "a-papeterie", "name": "Papeterie"}, {"id": "a-hygiene", "name": "Hygiène"}, {"id": "a-biscuits", "name": "Biscuits"}, {"id": "a-caisse", "name": "Caisse"}, {"id": "a-divers", "name": "Divers"}], "items": [{"aisle": "a-boulangerie", "id": "i-pain", "name": "Pain", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pain-complet", "name": "Pain complet", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pain-au-lait", "name": "Pain au lait", "staple": false}, {"aisle": "a-boulangerie", "id": "i-muffins", "name": "Muffins", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pains-burger", "name": "Pains burger", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pains-hot-dog", "name": "Pains hot-dog", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pain-a-sandwich", "name": "Pain à sandwich", "staple": false}, {"aisle": "a-fruits", "id": "i-bananes", "name": "Bananes", "staple": false}, {"aisle": "a-fruits", "id": "i-poires", "name": "Poires", "staple": false}, {"aisle": "a-fruits", "id": "i-pommes", "name": "Pommes", "staple": false}, {"aisle": "a-fruits", "id": "i-peches", "name": "Pêches", "staple": false}, {"aisle": "a-fruits", "id": "i-kiwis", "name": "Kiwis", "staple": false}, {"aisle": "a-fruits", "id": "i-oranges", "name": "Oranges", "staple": false}, {"aisle": "a-fruits", "id": "i-citrons", "name": "Citrons", "staple": false}, {"aisle": "a-fruits", "id": "i-avocats", "name": "Avocats", "staple": false}, {"aisle": "a-legumes", "id": "i-tomates", "name": "Tomates", "staple": false}, {"aisle": "a-legumes", "id": "i-tomates-cerises", "name": "Tomates cerises", "staple": false}, {"aisle": "a-legumes", "id": "i-poivrons", "name": "Poivrons", "staple": false}, {"aisle": "a-legumes", "id": "i-courgettes", "name": "Courgettes", "staple": false}, {"aisle": "a-legumes", "id": "i-carottes", "name": "Carottes", "staple": false}, {"aisle": "a-legumes", "id": "i-champignons", "name": "Champignons", "staple": false}, {"aisle": "a-legumes", "id": "i-oignons", "name": "Oignons", "staple": false}, {"aisle": "a-legumes", "id": "i-brocoli", "name": "Brocoli", "staple": false}, {"aisle": "a-legumes", "id": "i-epinards-frais", "name": "Épinards frais", "staple": false}, {"aisle": "a-legumes", "id": "i-pommes-de-terre-en-tranches", "name": "Pommes de terre en tranches", "staple": false}, {"aisle": "a-legumes", "id": "i-puree-de-legumes", "name": "Purée de légumes", "staple": false}, {"aisle": "a-pates-fraiches", "id": "i-gnocchis", "name": "Gnocchis", "staple": false}, {"aisle": "a-pates-fraiches", "id": "i-raviolis-farcis", "name": "Raviolis farcis", "staple": false}, {"aisle": "a-jambon", "id": "i-jambon", "name": "Jambon", "staple": false}, {"aisle": "a-jambon", "id": "i-jambon-sec", "name": "Jambon sec", "staple": false}, {"aisle": "a-jambon", "id": "i-knackis", "name": "Knackis", "staple": false}, {"aisle": "a-jambon", "id": "i-rillettes", "name": "Rillettes", "staple": false}, {"aisle": "a-lardons", "id": "i-lardons-ou-pancetta", "name": "Lardons ou pancetta", "staple": false}, {"aisle": "a-lardons", "id": "i-bacon", "name": "Bacon", "staple": false}, {"aisle": "a-viandes", "id": "i-steaks-haches", "name": "Steaks hachés", "staple": false}, {"aisle": "a-viandes", "id": "i-viande-hachee", "name": "Viande hachée", "staple": false}, {"aisle": "a-viandes", "id": "i-saucisses", "name": "Saucisses", "staple": false}, {"aisle": "a-viandes", "id": "i-blancs-de-poulet", "name": "Blancs de poulet", "staple": false}, {"aisle": "a-viandes", "id": "i-ailes-de-poulet", "name": "Ailes de poulet", "staple": false}, {"aisle": "a-viandes", "id": "i-cordons-bleus", "name": "Cordons bleus", "staple": false}, {"aisle": "a-poisson", "id": "i-saumon", "name": "Saumon", "staple": false}, {"aisle": "a-poisson", "id": "i-mini-crevettes", "name": "Mini crevettes", "staple": false}, {"aisle": "a-traiteur-apero", "id": "i-houmous", "name": "Houmous", "staple": false}, {"aisle": "a-traiteur-apero", "id": "i-tapenade-poivrons", "name": "Tapenade poivrons", "staple": false}, {"aisle": "a-traiteur-apero", "id": "i-tarama", "name": "Tarama", "staple": false}, {"aisle": "a-oeufs", "id": "i-oeufs", "name": "Œufs", "staple": false}, {"aisle": "a-barres-de-cereales", "id": "i-barres-de-cereales", "name": "Barres de céréales", "staple": false}, {"aisle": "a-yaourts", "id": "i-fromage-blanc", "name": "Fromage blanc", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-fromage-frais", "name": "Fromage frais", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-comte", "name": "Comté", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-fromage-en-tranches", "name": "Fromage en tranches", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-parmesan", "name": "Parmesan", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-fromage-rape", "name": "Fromage râpé", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-mozzarella", "name": "Mozzarella", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-beurre", "name": "Beurre", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-creme-fraiche", "name": "Crème fraîche", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-special-k", "name": "Special K", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-muesli-chocolat", "name": "Muesli chocolat", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-granola", "name": "Granola", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-cruesli-melange-de-noix", "name": "Cruesli mélange de noix", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-nutella", "name": "Nutella", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-confiture", "name": "Confiture", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-miel", "name": "Miel", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-peanut-butter", "name": "Peanut butter", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-cacao", "name": "Cacao", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-the-et-tisane", "name": "Thé et tisane", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-compotes-et-pom-potes", "name": "Compotes et Pom'Potes", "staple": false}, {"aisle": "a-conserves", "id": "i-thon-en-boite", "name": "Thon en boîte", "staple": false}, {"aisle": "a-conserves", "id": "i-mais", "name": "Maïs", "staple": false}, {"aisle": "a-conserves", "id": "i-haricots", "name": "Haricots", "staple": false}, {"aisle": "a-conserves", "id": "i-baked-beans", "name": "Baked beans", "staple": false}, {"aisle": "a-conserves", "id": "i-lentilles", "name": "Lentilles", "staple": false}, {"aisle": "a-conserves", "id": "i-sauce-tomate", "name": "Sauce tomate", "staple": false}, {"aisle": "a-conserves", "id": "i-soupe-de-legumes", "name": "Soupe de légumes", "staple": false}, {"aisle": "a-conserves", "id": "i-soupe-tomate", "name": "Soupe tomate", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-spaghetti", "name": "Spaghetti", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-penne", "name": "Penne", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-riz", "name": "Riz", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-risotto", "name": "Risotto", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-semoule", "name": "Semoule", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-puree", "name": "Purée", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-sauce-bolognaise", "name": "Sauce bolognaise", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-sauce-napolitaine", "name": "Sauce napolitaine", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-pesto", "name": "Pesto", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-pesto-rouge", "name": "Pesto rouge", "staple": false}, {"aisle": "a-huiles-et-vinaigres", "id": "i-huile", "name": "Huile", "staple": true}, {"aisle": "a-huiles-et-vinaigres", "id": "i-herbes-de-provence", "name": "Herbes de Provence", "staple": true}, {"aisle": "a-pates-et-sauces", "id": "i-mayonnaise", "name": "Mayonnaise", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-sauce-barbecue", "name": "Sauce barbecue", "staple": false}, {"aisle": "a-desserts-gourmands", "id": "i-fondant-au-chocolat", "name": "Fondant au chocolat", "staple": false}, {"aisle": "a-pq-et-sopalin", "id": "i-papier-toilette-ecoplanet", "name": "Papier toilette Ecoplanet", "staple": false}, {"aisle": "a-pq-et-sopalin", "id": "i-sopalin", "name": "Sopalin", "staple": false}, {"aisle": "a-pq-et-sopalin", "id": "i-mouchoirs", "name": "Mouchoirs", "staple": false}, {"aisle": "a-entretien", "id": "i-liquide-vaisselle", "name": "Liquide vaisselle", "staple": false}, {"aisle": "a-entretien", "id": "i-eponges", "name": "Éponges", "staple": false}, {"aisle": "a-entretien", "id": "i-gants-vaisselle", "name": "Gants vaisselle", "staple": false}, {"aisle": "a-entretien", "id": "i-brosse-vaisselle", "name": "Brosse vaisselle", "staple": false}, {"aisle": "a-entretien", "id": "i-brosse-souple", "name": "Brosse souple", "staple": false}, {"aisle": "a-entretien", "id": "i-petits-sacs-poubelle", "name": "Petits sacs poubelle", "staple": false}, {"aisle": "a-entretien", "id": "i-grands-sacs-poubelle", "name": "Grands sacs poubelle", "staple": false}, {"aisle": "a-entretien", "id": "i-spray-javel", "name": "Spray javel", "staple": false}, {"aisle": "a-entretien", "id": "i-nettoyant-vitres-et-salle-de-bain", "name": "Nettoyant vitres et salle de bain", "staple": false}, {"aisle": "a-entretien", "id": "i-nettoyant-wc", "name": "Nettoyant WC", "staple": false}, {"aisle": "a-entretien", "id": "i-bicarbonate-de-soude", "name": "Bicarbonate de soude", "staple": false}, {"aisle": "a-entretien", "id": "i-vinaigre-blanc", "name": "Vinaigre blanc", "staple": false}, {"aisle": "a-entretien", "id": "i-chiffons-microfibre", "name": "Chiffons microfibre", "staple": false}, {"aisle": "a-entretien", "id": "i-raclette-vitres", "name": "Raclette vitres", "staple": false}, {"aisle": "a-entretien", "id": "i-papier-alu", "name": "Papier alu", "staple": false}, {"aisle": "a-entretien", "id": "i-lessive-le-chat-sensitive", "name": "Lessive Le Chat Sensitive", "staple": false}, {"aisle": "a-entretien", "id": "i-adoucissant", "name": "Adoucissant", "staple": false}, {"aisle": "a-entretien", "id": "i-decolor-stop", "name": "Décolor Stop", "staple": false}, {"aisle": "a-entretien", "id": "i-vanish", "name": "Vanish", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-chips", "name": "Chips", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-melange-de-noix", "name": "Mélange de noix", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-cacahuetes", "name": "Cacahuètes", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-raisins-secs", "name": "Raisins secs", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-beef-jerky", "name": "Beef jerky", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-gressins-et-mini-toasts", "name": "Gressins et mini toasts", "staple": false}, {"aisle": "a-yaourts", "id": "i-yaourts-nature-pas-nestle", "name": "Yaourts nature (pas Nestlé)", "staple": false}, {"aisle": "a-yaourts", "id": "i-mousse-au-chocolat", "name": "Mousse au chocolat", "staple": false}, {"aisle": "a-surgeles", "id": "i-steaks-haches-surgeles", "name": "Steaks hachés surgelés", "staple": false}, {"aisle": "a-surgeles", "id": "i-nuggets", "name": "Nuggets", "staple": false}, {"aisle": "a-surgeles", "id": "i-poisson-surgele", "name": "Poisson surgelé", "staple": false}, {"aisle": "a-surgeles", "id": "i-poisson-pane", "name": "Poisson pané", "staple": false}, {"aisle": "a-surgeles", "id": "i-fish-and-chips", "name": "Fish and chips", "staple": false}, {"aisle": "a-surgeles", "id": "i-lasagnes", "name": "Lasagnes", "staple": false}, {"aisle": "a-surgeles", "id": "i-moussaka", "name": "Moussaka", "staple": false}, {"aisle": "a-surgeles", "id": "i-gratin-dauphinois", "name": "Gratin dauphinois", "staple": false}, {"aisle": "a-surgeles", "id": "i-pommes-de-terre-sautees", "name": "Pommes de terre sautées", "staple": false}, {"aisle": "a-surgeles", "id": "i-puree-surgelee", "name": "Purée surgelée", "staple": false}, {"aisle": "a-surgeles", "id": "i-ratatouille", "name": "Ratatouille", "staple": false}, {"aisle": "a-surgeles", "id": "i-epinards-surgeles", "name": "Épinards surgelés", "staple": false}, {"aisle": "a-surgeles", "id": "i-chou-fleur-surgele", "name": "Chou-fleur surgelé", "staple": false}, {"aisle": "a-surgeles", "id": "i-haricots-verts-surgeles", "name": "Haricots verts surgelés", "staple": false}, {"aisle": "a-surgeles", "id": "i-apero-surgele", "name": "Apéro surgelé", "staple": false}, {"aisle": "a-lait", "id": "i-lait", "name": "Lait", "staple": false}, {"aisle": "a-boissons", "id": "i-evian-1-l", "name": "Evian 1 L", "staple": false}, {"aisle": "a-boissons", "id": "i-may-tea", "name": "May Tea", "staple": false}, {"aisle": "a-boissons", "id": "i-coca-canettes", "name": "Coca (canettes)", "staple": false}, {"aisle": "a-boissons", "id": "i-bieres", "name": "Bières", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-piles-petites", "name": "Piles (petites)", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-ampoule", "name": "Ampoule", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-prise-chargeur", "name": "Prise chargeur", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-souris", "name": "Souris", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-bougies", "name": "Bougies", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-pince-pour-radiateur", "name": "Pince pour radiateur", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-tupperware", "name": "Tupperware", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-presse-agrumes", "name": "Presse-agrumes", "staple": false}, {"aisle": "a-papeterie", "id": "i-criterium", "name": "Critérium", "staple": false}, {"aisle": "a-papeterie", "id": "i-crayon-gris", "name": "Crayon gris", "staple": false}, {"aisle": "a-papeterie", "id": "i-bic-bleu", "name": "Bic bleu", "staple": false}, {"aisle": "a-papeterie", "id": "i-enveloppes", "name": "Enveloppes", "staple": false}, {"aisle": "a-papeterie", "id": "i-cartes-postales", "name": "Cartes postales", "staple": false}, {"aisle": "a-papeterie", "id": "i-pochettes-carton", "name": "Pochettes carton", "staple": false}, {"aisle": "a-hygiene", "id": "i-shampoing", "name": "Shampoing", "staple": false}, {"aisle": "a-hygiene", "id": "i-gel-douche", "name": "Gel douche", "staple": false}, {"aisle": "a-hygiene", "id": "i-deodorant", "name": "Déodorant", "staple": false}, {"aisle": "a-hygiene", "id": "i-dentifrice", "name": "Dentifrice", "staple": false}, {"aisle": "a-hygiene", "id": "i-brosse-a-dents", "name": "Brosse à dents", "staple": false}, {"aisle": "a-hygiene", "id": "i-bain-de-bouche", "name": "Bain de bouche", "staple": false}, {"aisle": "a-hygiene", "id": "i-mousse-a-raser", "name": "Mousse à raser", "staple": false}, {"aisle": "a-hygiene", "id": "i-coton-tiges", "name": "Coton-tiges", "staple": false}, {"aisle": "a-hygiene", "id": "i-baume-a-levres", "name": "Baume à lèvres", "staple": false}, {"aisle": "a-hygiene", "id": "i-cure-dents", "name": "Cure-dents", "staple": false}, {"aisle": "a-hygiene", "id": "i-preservatifs", "name": "Préservatifs", "staple": false}, {"aisle": "a-hygiene", "id": "i-lubrifiant", "name": "Lubrifiant", "staple": false}, {"aisle": "a-biscuits", "id": "i-oreo", "name": "Oreo", "staple": false}, {"aisle": "a-biscuits", "id": "i-cookies-granola", "name": "Cookies granola", "staple": false}, {"aisle": "a-biscuits", "id": "i-petit-beurre-chocolat", "name": "Petit Beurre chocolat", "staple": false}, {"aisle": "a-biscuits", "id": "i-chocolat-milka", "name": "Chocolat Milka", "staple": false}, {"aisle": "a-caisse", "id": "i-chewing-gums", "name": "Chewing-gums", "staple": false}, {"aisle": "a-huiles-et-vinaigres", "id": "i-cumin", "name": "Cumin", "staple": true}, {"aisle": "a-pates-et-sauces", "id": "i-xcmg1mrsaq", "name": "Ketchup", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-4dqlekum05", "name": "Pâtes Coudes Rayés", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-w9fzqcfm06", "name": "Pesto Rosso", "staple": false}, {"aisle": "a-yaourts", "id": "i-1jwh90vf50", "name": "Yoplait Skyr Vanille", "staple": false}, {"aisle": "a-entretien", "id": "i-cbtxhdefrj", "name": "Vanish Oxi Action", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-1596mx86ab", "name": "Collier Serage Rilsan", "staple": false}], "meals": [{"id": "m-tartines-thon", "items": ["i-pain-complet", "i-thon-en-boite", "i-fromage-blanc", "i-citrons", "i-avocats"], "name": "Tartines rillettes de thon", "serves": 2}, {"id": "m-tartines-oeufs", "items": ["i-pain-complet", "i-fromage-frais", "i-oeufs", "i-epinards-frais"], "name": "Tartines fromage frais et œufs brouillés", "serves": 1}, {"id": "m-gnocchis", "items": ["i-gnocchis", "i-tomates-cerises", "i-lardons-ou-pancetta", "i-parmesan", "i-huile"], "name": "Gnocchis poêlés, tomates cerises, lardons et parmesan", "serves": 2}, {"id": "m-lentilles", "items": ["i-lentilles", "i-sauce-tomate", "i-courgettes", "i-huile"], "name": "Lentilles, sauce tomate et courgettes", "serves": 2}, {"id": "m-riz-saucisses", "items": ["i-riz", "i-poivrons", "i-saucisses", "i-huile"], "name": "Riz, poivrons poêlés et saucisses", "serves": 2}, {"id": "m-riz-steak", "items": ["i-riz", "i-courgettes", "i-steaks-haches", "i-huile"], "name": "Riz, courgettes poêlées et steak haché", "serves": 2}, {"id": "m-shakshuka", "items": ["i-oeufs", "i-sauce-tomate", "i-poivrons", "i-oignons", "i-cumin", "i-pain-complet", "i-huile"], "name": "Shakshuka", "serves": 2}, {"id": "m-x5avun0m06", "items": ["i-4dqlekum05", "i-w9fzqcfm06", "i-parmesan"], "name": "Pâtes Pesto Rosso", "serves": 2}, {"id": "m-et55cunf50", "items": ["i-lait", "i-cruesli-melange-de-noix", "i-1jwh90vf50"], "name": "Petit Déj", "serves": 2}], "need": {"i-1596mx86ab": ["m"], "i-cbtxhdefrj": ["m"]}, "open": {"2026-10-06|midi": true}, "plan": {"2026-10-04|midi": {"m": "m-tartines-oeufs"}, "2026-10-04|soir": {"left": "2026-10-03|soir", "m": "m-lentilles"}, "2026-10-05|soir": {"m": "m-gnocchis"}, "2026-10-06|midi": {"left": "2026-10-05|soir", "m": "m-gnocchis"}, "2026-10-06|soir": {"m": "m-tartines-thon"}, "2026-10-07|soir": {"left": "2026-10-06|soir", "m": "m-tartines-thon"}}, "planned": ["m-gnocchis", "m-tartines-oeufs", "m-et55cunf50"], "settings": {"autoLeft": false, "linkPlan": false}, "updatedAt": 1791112218711, "v": 1};
+var state = sanitize(loadLocal() || SEED || blank());
+var bought = new Set();
+var ui = {tab:"list", mode:"route"};
+
+function itemById(id){ return state.items.find(function(i){ return i.id === id; }); }
+function mealById(id){ return state.meals.find(function(m){ return m.id === id; }); }
+function aisleById(id){ return state.aisles.find(function(a){ return a.id === id; }); }
+function findItem(name){ var k = norm(name); return k ? state.items.find(function(i){ return norm(i.name) === k; }) : undefined; }
+function isNeeded(id){ var s = state.need[id]; return Array.isArray(s) && s.length > 0; }
+function addSource(id, src){ var s = state.need[id] || []; if (s.indexOf(src) < 0) s.push(src); state.need[id] = s; }
+function removeSource(id, src){ var s = (state.need[id] || []).filter(function(x){ return x !== src; }); if (s.length) state.need[id] = s; else delete state.need[id]; }
+function getOrCreateItem(name, aisle, staple){
+  var ex = findItem(name); if (ex) return ex.id;
+  var it = {id:uid("i"), name:cap(name), aisle: aisleById(aisle) ? aisle : DIVERS, staple: !!staple};
+  state.items.push(it); return it.id;
+}
+function aisleFromName(n){
+  var k = norm(n); if (!k) return DIVERS;
+  var exact = state.aisles.find(function(a){ return norm(a.name) === k; }); if (exact) return exact.id;
+  var part = state.aisles.find(function(a){ var an = norm(a.name); return an.indexOf(k) >= 0 || k.indexOf(an) >= 0; });
+  return part ? part.id : DIVERS;
+}
+function toIng(x){
+  var ex = findItem(x.name);
+  if (ex) return {id:ex.id, name:ex.name, aisle:ex.aisle, staple:ex.staple};
+  return {name:cap(x.name), aisle:aisleFromName(x.rayon), staple:!!x.placard};
+}
+function aisleOptions(sel){ return state.aisles.map(function(a){ return '<option value="' + esc(a.id) + '"' + (a.id === sel ? " selected" : "") + ">" + esc(a.name) + "</option>"; }).join(""); }
+
+function commit(){
+  state.updatedAt = Math.max(Date.now(), state.updatedAt + 1);
+  saveLocal(); render(); queueRemote();
+}
+
+/* ---------- Sync between devices (db capability) ---------- */
+var docRef = null, writeChain = Promise.resolve(), writeTimer = null, retries = 0;
+function setSync(mode){
+  $("#sync").textContent = mode === "cloud"
+    ? "Ta liste est enregistrée en ligne : elle est la même sur ton téléphone et ton ordinateur."
+    : "Ta liste est enregistrée sur cet appareil.";
+}
+function queueRemote(){ if (!docRef) return; clearTimeout(writeTimer); writeTimer = setTimeout(flushRemote, 600); }
+function flushRemote(){
+  if (!docRef) return;
+  var ref = docRef, body = JSON.parse(JSON.stringify(state));
+  writeChain = writeChain.then(function(){ return ref.set(body); }).then(function(){ retries = 0; setSync("cloud"); }).catch(function(e){
+    var code = e && e.code;
+    if (code === "unavailable" && retries < 3) { retries++; setTimeout(queueRemote, 1000 + Math.random() * 2000 * retries); }
+    else if (code === "quota_exceeded") { toast("Le stockage en ligne est plein. Tes changements restent sur cet appareil."); setSync("local"); }
+    else { setSync("local"); if (code === "revoked" || code === "not_granted" || code === "invalid_argument") docRef = null; }
+  });
+}
+function initCloud(){
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  window.claude.use("db").then(function(db){
+    if (!db) return;
+    var ref; try { ref = db.doc("app/state"); } catch (e) { return; }
+    docRef = ref;
+    ref.onSnapshot(function(snap){
+      if (!snap.exists) { if (state.updatedAt > 0) queueRemote(); setSync("cloud"); return; }
+      var data = snap.data(); if (!data) return;
+      var remoteAt = typeof data.updatedAt === "number" ? data.updatedAt : 0;
+      if (remoteAt > state.updatedAt) {
+        state = sanitize(JSON.parse(JSON.stringify(data)));
+        state.updatedAt = remoteAt;
+        if (prunePlan()) { commit(); return; }
+        saveLocal(); render();
+      } else if (remoteAt < state.updatedAt && !snap.metadata.hasPendingWrites) {
+        queueRemote();
+      }
+      setSync("cloud");
+    }, function(){ docRef = null; setSync("local"); });
+  }).catch(function(){});
+}
+
+/* ---------- Claude helpers (sample capability) ---------- */
+var sample = null;
+function initAI(){
+  if (!window.claude || typeof window.claude.use !== "function") return;
+  window.claude.use("sample").then(function(s){ sample = s || null; document.body.classList.toggle("has-ai", !!sample); }).catch(function(){});
+}
+function aiErr(e){
+  var c = e && e.code;
+  if (c === "not_granted") { sample = null; document.body.classList.remove("has-ai"); return "Claude n'est pas autorisé sur cette page."; }
+  if (c === "rate_limited") return "Trop de demandes d'affilée. Réessaie dans une minute.";
+  if (c === "cancelled") return "";
+  return "Claude n'a pas pu répondre. Réessaie.";
+}
+function aisleNamesText(){ return state.aisles.map(function(a){ return a.name; }).join(" | "); }
+function catalogText(){ return state.items.slice(0, 400).map(function(i){ return i.name; }).join(", ") || "aucun"; }
+var PLACARD_RULE = 'Mets "placard": true pour ce qu\'on garde normalement en stock (sel, poivre, huile, épices, ail, bouillon, farine, sucre…), sinon false.';
+
+/* ---------- Actions ---------- */
+function toggleItem(id){
+  if (!itemById(id)) return;
+  if (isNeeded(id)) { delete state.need[id]; if (ui.mode === "route") bought.add(id); }
+  else { addSource(id, "m"); bought.delete(id); }
+  commit();
+}
+/* ---------- Planning ---------- */
+function pad2(n){ return (n < 10 ? "0" : "") + n; }
+function dkey(d){ return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+function todayDate(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+function addDays(d, n){ var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+function fromKey(k){ var p = k.slice(0,10).split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function isWeekend(d){ var w = d.getDay(); return w === 0 || w === 6; }
+function isOpen(key){ return !!(state.open && state.open[key]); }
+function editableSlot(d, slot){
+  if (slot === "soir") return true;
+  var key = slotKey(d, slot);
+  if (slot === "midi") return isWeekend(d) || isOpen(key);
+  return isOpen(key);
+}
+function slotKey(d, slot){ return dkey(d) + "|" + slot; }
+var LEFTOVER_DAYS = 2;
+function nextFreeSlot(key, maxDays){
+  var p = key.split("|"), d = fromKey(p[0]), order = ["midi","soir"], i = order.indexOf(p[1]);
+  for (var n = 0; n <= maxDays; n++) {
+    var day = addDays(d, n);
+    for (var j = (n === 0 ? i + 1 : 0); j < order.length; j++) {
+      var k = slotKey(day, order[j]);
+      if (editableSlot(day, order[j]) && !state.plan[k]) return k;
+    }
+  }
+  return null;
+}
+function dayName(d){
+  var diff = Math.round((d - todayDate()) / 86400000);
+  if (diff === 0) return "aujourd'hui";
+  if (diff === 1) return "demain";
+  return d.toLocaleDateString("fr-FR", {weekday:"long"});
+}
+function slotLabel(key){
+  var p = key.split("|"), d = fromKey(p[0]), dn = dayName(d);
+  if (dn === "aujourd'hui") return p[1] === "soir" ? "ce soir" : p[1] === "midi" ? "ce midi" : "ce matin";
+  return dn + " " + p[1];
+}
+function plannedSet(includePast){
+  var s = {}, t = dkey(todayDate());
+  state.planned.forEach(function(id){ s[id] = 1; });
+  if (state.settings.linkPlan) Object.keys(state.plan).forEach(function(k){ var v = state.plan[k]; if (v && !v.left && (includePast || k.slice(0,10) >= t)) s[v.m] = 1; });
+  return s;
+}
+function applyDiff(before, after){
+  var added = [], check = [];
+  Object.keys(after).forEach(function(id){
+    if (before[id]) return;
+    var m = mealById(id); if (!m) return;
+    m.items.forEach(function(i){
+      var it = itemById(i); if (!it) return;
+      if (it.staple) { if (check.indexOf(it.name.toLowerCase()) < 0) check.push(it.name.toLowerCase()); return; }
+      if (!isNeeded(i) && added.indexOf(it.name) < 0) added.push(it.name);
+      addSource(i, id); bought.delete(i);
+    });
+  });
+  Object.keys(before).forEach(function(id){
+    if (after[id]) return;
+    var m = mealById(id); if (m) m.items.forEach(function(i){ removeSource(i, id); });
+  });
+  return {added:added, check:check};
+}
+function diffMsg(r){
+  var msg = r.added.length ? " " + r.added.length + " " + plural(r.added.length, "produit ajouté", "produits ajoutés") + " à la liste." : "";
+  if (r.check.length) msg += " Vérifie au placard : " + r.check.join(", ") + ".";
+  return msg;
+}
+function planLabels(mid){
+  var t = dkey(todayDate());
+  return Object.keys(state.plan).filter(function(k){ var v = state.plan[k]; return v && !v.left && v.m === mid && k.slice(0,10) >= t; })
+    .sort().map(slotLabel);
+}
+function slotOrd(key){ var p = key.split("|"); return p[0] + ["matin","midi","soir"].indexOf(p[1]); }
+function pendingPortions(){
+  var out = [];
+  Object.keys(state.plan).sort(function(a, b){ return slotOrd(a) < slotOrd(b) ? -1 : 1; }).forEach(function(k){
+    var v = state.plan[k]; if (!v || v.left || v.one) return;
+    var m = mealById(v.m); if (!m || m.serves === 1) return;
+    var placed = Object.keys(state.plan).some(function(x){ var y = state.plan[x]; return y && y.left === k; });
+    if (!placed) out.push({from:k, m:m});
+  });
+  return out;
+}
+function setSetting(name, on){
+  var before = plannedSet();
+  state.settings[name] = on;
+  var r = applyDiff(before, plannedSet()); commit();
+  if (name === "linkPlan") toast(on ? "Planning lié à la liste." + (diffMsg(r) || "") : "Planning séparé : il ne touche plus à ta liste.");
+  else toast(on ? "Les restes se placent automatiquement, jusqu'à 2 jours après." : "Les restes attendent dans « Portions à placer ».");
+}
+function clearPlan(){
+  if (!Object.keys(state.plan).length && !Object.keys(state.open).length) return;
+  var before = plannedSet();
+  state.plan = {}; state.open = {};
+  applyDiff(before, plannedSet()); commit(); toast("Planning vidé.");
+}
+function dropPortion(from){
+  var v = state.plan[from]; if (!v) return;
+  v.one = true; commit(); toast("Noté : pour un seul repas.");
+}
+function clearSlot(key){
+  var old = state.plan[key];
+  if (old && !old.left) Object.keys(state.plan).forEach(function(k){ var v = state.plan[k]; if (v && v.left === key) delete state.plan[k]; });
+  delete state.plan[key];
+}
+function setPlan(key, val){
+  if (val === "__left") return;
+  var before = plannedSet();
+  if (val.indexOf("__p:") === 0) {
+    var from = val.slice(4), src = state.plan[from], sm = src ? mealById(src.m) : null;
+    if (!sm) return;
+    clearSlot(key);
+    state.plan[key] = {m:src.m, left:from};
+    applyDiff(before, plannedSet()); commit();
+    toast("Reste de " + sm.name + " placé " + slotLabel(key) + ".");
+    return;
+  }
+  if (val === "__close") {
+    clearSlot(key); delete state.open[key];
+    applyDiff(before, plannedSet()); commit();
+    toast(cap(slotLabel(key)) + " : pas besoin de repas.");
+    return;
+  }
+  clearSlot(key);
+  if (!val) {
+    applyDiff(before, plannedSet()); commit();
+    toast("Rien de prévu " + slotLabel(key) + ".");
+    return;
+  }
+  var m = mealById(val); if (!m) return;
+  state.plan[key] = {m:val};
+  var extra = "", far = null;
+  if (m.serves !== 1 && !state.settings.autoLeft) extra = " 1 portion à placer : choisis-la dans un autre créneau.";
+  else if (m.serves !== 1) {
+    var nk = nextFreeSlot(key, LEFTOVER_DAYS);
+    if (nk) { state.plan[nk] = {m:val, left:key}; extra = " Le reste est prévu " + slotLabel(nk) + "."; }
+    else far = nextFreeSlot(key, 14);
+  }
+  var r = applyDiff(before, plannedSet()); commit();
+  toast(m.name + " : " + slotLabel(key) + "." + extra + diffMsg(r));
+  if (m.serves !== 1 && !extra) askOnePortion(key, m, far);
+}
+function askOnePortion(key, m, far){
+  openSheet('<h2 tabindex="-1" autofocus>Pas de créneau proche pour le reste</h2>'
+    + '<p class="hint">' + esc(cap(slotLabel(key))) + ", tu cuisines « " + esc(m.name) + " » pour 2 repas, mais "
+    + (far ? "le prochain créneau libre est " + esc(slotLabel(far)) + ", c'est loin." : "il n'y a pas de créneau libre dans les jours qui suivent.")
+    + " Tu le cuisines pour un seul repas cette fois ?</p>"
+    + '<div class="sheet-actions"><button class="btn ghost" type="button" id="op-keep">Garder 2 portions</button><button class="btn primary" type="button" id="op-one">Pour 1 repas</button></div>',
+  function(root){
+    root.querySelector("#op-one").onclick = function(){
+      var v = state.plan[key]; if (v && v.m === m.id && !v.left) { v.one = true; commit(); }
+      closeSheet(); toast("Noté : " + m.name + " pour un seul repas " + slotLabel(key) + ".");
+    };
+    root.querySelector("#op-keep").onclick = function(){ closeSheet(); toast("La portion attend dans « Portions à placer »."); };
+  });
+}
+function openSlot(key){
+  state.open[key] = true; commit();
+  var sel = document.querySelector('select[data-plan="' + key + '"]');
+  if (sel) { try { sel.focus(); if (sel.showPicker) sel.showPicker(); } catch (e) {} }
+}
+function prunePlan(){
+  var t = dkey(todayDate()), before = plannedSet(true), changed = false;
+  Object.keys(state.plan).forEach(function(k){ if (k.slice(0,10) < t) { delete state.plan[k]; changed = true; } });
+  Object.keys(state.open).forEach(function(k){ if (k.slice(0,10) < t) { delete state.open[k]; changed = true; } });
+  if (changed) applyDiff(before, plannedSet());
+  return changed;
+}
+
+function toggleMeal(mid){
+  var m = mealById(mid); if (!m) return;
+  var before = plannedSet();
+  if (state.planned.indexOf(mid) >= 0) {
+    state.planned = state.planned.filter(function(x){ return x !== mid; });
+    var after = plannedSet(); applyDiff(before, after); commit();
+    toast(after[mid] ? m.name + " reste prévu dans ton planning." : m.name + " n'est plus prévu.");
+    return;
+  }
+  if (before[mid]) { toast(m.name + " est déjà dans ton planning : " + planLabels(mid).join(", ") + "."); return; }
+  state.planned.push(mid);
+  var r = applyDiff(before, plannedSet()); commit();
+  toast(m.name + " ajouté sans jour précis." + (diffMsg(r) || " Tout est déjà sur la liste."));
+}
+function newWeek(){
+  if (!state.planned.length) return;
+  var before = plannedSet();
+  state.planned = [];
+  applyDiff(before, plannedSet()); commit();
+  toast("Les repas sans jour sont retirés. Ton planning ne change pas.");
+}
+function deleteItem(id){
+  state.items = state.items.filter(function(i){ return i.id !== id; });
+  state.meals.forEach(function(m){ m.items = m.items.filter(function(x){ return x !== id; }); });
+  delete state.need[id]; bought.delete(id);
+}
+function quickAdd(){
+  var inp = $("#qa"), name = inp.value.trim(); if (!name) return;
+  var ex = findItem(name);
+  inp.value = "";
+  if (ex) {
+    var was = isNeeded(ex.id);
+    addSource(ex.id, "m"); bought.delete(ex.id); commit();
+    toast(was ? ex.name + " est déjà sur la liste." : ex.name + " ajouté à la liste.");
+  } else {
+    openItemSheet({name:cap(name)});
+  }
+}
+function moveAisle(id, d){
+  var i = state.aisles.findIndex(function(a){ return a.id === id; }), j = i + d;
+  if (i < 0 || j < 0 || j >= state.aisles.length) return;
+  var t = state.aisles[i]; state.aisles[i] = state.aisles[j]; state.aisles[j] = t;
+  commit();
+  var b = document.querySelector('[data-act="aisle-' + (d < 0 ? "up" : "down") + '"][data-id="' + id + '"]');
+  if (b && !b.disabled) b.focus();
+}
+function deleteAisle(id){
+  if (id === DIVERS) return;
+  var a = aisleById(id); if (!a) return;
+  var moved = 0;
+  state.items.forEach(function(i){ if (i.aisle === id) { i.aisle = DIVERS; moved++; } });
+  state.aisles = state.aisles.filter(function(x){ return x.id !== id; });
+  commit();
+  toast(a.name + " supprimé." + (moved ? " " + moved + " " + plural(moved, "produit déplacé", "produits déplacés") + " dans Divers." : ""));
+}
+function addAisle(){
+  var inp = $("#new-aisle"), name = cap(inp.value.trim()); if (!name) return;
+  if (state.aisles.some(function(a){ return norm(a.name) === norm(name); })) { toast("Ce rayon existe déjà."); return; }
+  var a = {id:uid("a"), name:name};
+  var last = state.aisles.length - 1;
+  if (last >= 0 && state.aisles[last].id === DIVERS) state.aisles.splice(last, 0, a); else state.aisles.push(a);
+  inp.value = ""; commit(); toast(name + " ajouté. Déplace-le avec les flèches.");
+}
+
+/* ---------- Rendering ---------- */
+function render(){ renderSummary(); renderList(); renderPlan(); renderMeals(); renderAisles(); renderDatalist(); }
+
+function renderSummary(){
+  var n = state.items.filter(function(i){ return isNeeded(i.id); }).length, p = Object.keys(plannedSet()).length;
+  $("#summary").textContent = (n ? n + " " + plural(n, "produit", "produits") + " à acheter" : "Rien à acheter pour l'instant")
+    + (p ? ", " + p + " repas " + plural(p, "prévu", "prévus") : "");
+  var bl = $("#badge-list"); bl.textContent = n || ""; bl.hidden = !n;
+  var bm = $("#badge-meals"); bm.textContent = p || ""; bm.hidden = !p;
+}
+
+function itemRow(i, route){
+  var on = isNeeded(i.id), got = route && !on;
+  var why = on ? (state.need[i.id] || []).filter(function(s){ return s !== "m"; }).map(function(s){ var m = mealById(s); return m ? m.name : ""; }).filter(Boolean) : [];
+  var sub = why.length ? why.join(", ") : (!route && i.staple ? "Au placard" : "");
+  return '<li class="item' + (on ? " on" : "") + (got ? " got" : "") + '">'
+    + '<button type="button" class="tick" data-act="tick" data-id="' + esc(i.id) + '" aria-pressed="' + on + '">'
+    + '<span class="box" aria-hidden="true"></span><span class="label"><span class="name">' + esc(i.name) + "</span>"
+    + (sub ? '<span class="why">' + esc(sub) + "</span>" : "") + "</span></button>"
+    + (route ? "" : '<button type="button" class="more" data-act="edit-item" data-id="' + esc(i.id) + '" aria-label="Modifier ' + esc(i.name) + '">…</button>')
+    + "</li>";
+}
+
+function renderList(){
+  document.querySelectorAll('[data-act="mode"]').forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.mode === ui.mode)); });
+  var route = ui.mode === "route", html = "", shown = 0;
+  state.aisles.forEach(function(a){
+    var its = state.items.filter(function(i){ return i.aisle === a.id; });
+    if (route) its = its.filter(function(i){ return isNeeded(i.id) || bought.has(i.id); });
+    if (route && !its.length) return;
+    its.sort(function(x, y){ return x.name.localeCompare(y.name, "fr", {sensitivity:"base"}); });
+    shown += its.length;
+    var left = its.filter(function(i){ return isNeeded(i.id); }).length;
+    var cls = !its.length ? " empty" : (route && !left ? " done" : "");
+    var count = its.length ? '<span class="count">' + (route ? (left ? left : "fait") : its.length) + "</span>" : "";
+    html += '<li class="stop' + cls + '"><span class="dot" aria-hidden="true"></span><div class="stop-head"><h2>' + esc(a.name) + "</h2>" + count + "</div>"
+      + (its.length ? '<ul class="items">' + its.map(function(i){ return itemRow(i, route); }).join("") + "</ul>" : "") + "</li>";
+  });
+  var ol = $("#route"), empty = $("#list-empty"), foot = $("#list-foot");
+  ol.innerHTML = html;
+  if (route && !shown) {
+    ol.hidden = true; empty.hidden = false;
+    empty.innerHTML = "<h2>Rien à acheter pour l'instant</h2><p>Choisis les repas de la semaine, ou coche ce qu'il te faut dans le catalogue.</p>"
+      + '<div class="row"><button class="btn primary" type="button" data-act="goto-meals">Choisir des repas</button><button class="btn" type="button" data-act="goto-all">Ouvrir le catalogue</button></div>';
+  } else if (!route && !state.items.length) {
+    ol.hidden = true; empty.hidden = false;
+    empty.innerHTML = "<h2>Ton catalogue est vide</h2><p>Ajoute un produit avec le champ ci-dessus, ou colle ta liste actuelle pour la ranger par rayon.</p>"
+      + '<div class="row"><button class="btn primary" type="button" data-act="import">Importer une liste</button></div>';
+  } else { ol.hidden = false; empty.hidden = true; empty.innerHTML = ""; }
+  var f = "";
+  if (route) {
+    var k = Array.from(bought).filter(function(id){ return itemById(id) && !isNeeded(id); }).length;
+    if (k) f = '<p class="hint">' + k + " " + plural(k, "produit acheté", "produits achetés") + '. Touche un produit barré pour le remettre sur la liste.</p><button class="btn small" type="button" data-act="clear-bought">Masquer les produits achetés</button>';
+  } else if (state.items.length) {
+    f = '<p class="hint">Coche ce que tu dois acheter. Le bouton … sert à renommer un produit, changer son rayon ou le supprimer.</p><button class="btn small" type="button" data-act="import">Importer une liste</button>';
+  }
+  foot.innerHTML = f;
+}
+
+function renderMeals(){
+  var ps = plannedSet(), p = Object.keys(ps).length, manual = state.planned.length;
+  $("#week-label").textContent = p ? p + " repas " + plural(p, "prévu", "prévus") : "Aucun repas prévu";
+  $("#new-week").hidden = !manual;
+  var list = state.meals.slice().sort(function(a, b){
+    var pa = ps[a.id] ? 0 : 1, pb = ps[b.id] ? 0 : 1;
+    return pa - pb || a.name.localeCompare(b.name, "fr", {sensitivity:"base"});
+  });
+  var el = $("#meal-list");
+  if (!list.length) { el.innerHTML = '<li class="empty-state"><h2>Aucun repas</h2><p>Crée ton premier repas, avec les ingrédients qu\'il demande.</p></li>'; return; }
+  el.innerHTML = list.map(function(m){
+    var on = !!ps[m.id], when = state.settings.linkPlan ? planLabels(m.id) : [];
+    if (state.planned.indexOf(m.id) >= 0) when.push("sans jour");
+    var ings = m.items.map(function(i){ var it = itemById(i); return it ? it.name : ""; }).filter(Boolean).join(", ");
+    return '<li class="meal' + (on ? " on" : "") + '"><button type="button" class="meal-toggle" data-act="meal" data-id="' + esc(m.id) + '" aria-pressed="' + on + '">'
+      + '<span class="meal-mark" aria-hidden="true"></span><span class="meal-text"><span class="meal-name">' + esc(m.name) + "</span>"
+      + (when.length ? '<span class="meal-when">Prévu ' + esc(when.join(", ")) + "</span>" : "")
+      + '<span class="meal-ings">' + esc(ings || "Aucun ingrédient") + (m.serves === 1 ? "" : " (pour 2 repas)") + "</span></span></button>"
+      + '<button type="button" class="meal-edit" data-act="edit-meal" data-id="' + esc(m.id) + '">Modifier</button></li>';
+  }).join("");
+}
+
+function renderPlan(){
+  var el = $("#days"); if (!el) return;
+  var ae = document.activeElement;
+  if (ae && ae.tagName === "SELECT" && ae.closest && ae.closest("#days")) return;
+  var keep = el.scrollLeft, t = todayDate(), html = "";
+  var meals = state.meals.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "fr", {sensitivity:"base"}); });
+  function slotHtml(d, slot){
+    var key = slotKey(d, slot), v = state.plan[key], m = v ? mealById(v.m) : null, cls = "slot", val;
+    var label = slot === "matin" ? "Matin" : slot === "midi" ? "Midi" : "Soir";
+    if (!m) val = '<div class="slot-v pick">Choisir un repas</div>';
+    else if (v.left) { cls += " left"; val = '<div class="slot-v">Reste : ' + esc(m.name) + "</div>"; }
+    else val = '<div class="slot-v">' + esc(m.name) + "</div>" + (m.serves === 1 ? "" : '<div class="slot-n">' + (v.one ? "Pour 1 repas cette fois" : "Pour 2 repas") + "</div>");
+    var closable = slot === "matin" || (slot === "midi" && !isWeekend(d));
+    var opts = '<option value=""' + (m ? "" : " selected") + ">Pas prévu</option>"
+      + (closable ? '<option value="__close">' + (slot === "matin" ? "Pas besoin (petit-déj)" : "Pas besoin (au travail)") + "</option>" : "")
+      + (m && v.left ? '<option value="__left" selected>Reste : ' + esc(m.name) + "</option>" : "")
+      + (function(){
+          var pend = pendingPortions().filter(function(pp){ return slotOrd(pp.from) < slotOrd(key); });
+          return pend.length ? '<optgroup label="Portions à placer">' + pend.map(function(pp){ return '<option value="__p:' + pp.from + '">Reste : ' + esc(pp.m.name) + " (" + esc(slotLabel(pp.from)) + ")</option>"; }).join("") + "</optgroup>" : "";
+        })()
+      + '<optgroup label="Repas">' + meals.map(function(x){ return '<option value="' + esc(x.id) + '"' + (m && !v.left && x.id === m.id ? " selected" : "") + ">" + esc(x.name) + "</option>"; }).join("") + "</optgroup>";
+    var aria = label + ", " + d.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"});
+    return '<div class="' + cls + '"><div class="slot-k">' + label + "</div>" + val + '<select data-plan="' + key + '" aria-label="' + esc(aria) + '">' + opts + "</select></div>";
+  }
+  function off(d, slot, label, text){
+    var key = slotKey(d, slot);
+    return '<button type="button" class="slot off" data-act="open-slot" data-key="' + key + '" aria-label="' + label + ", " + text + '. Rendre disponible"><div class="slot-k">' + label + '</div><div class="slot-v">' + text + "</div></button>";
+  }
+  for (var n = 0; n < 7; n++) {
+    var d = addDays(t, n), title = n === 0 ? "Aujourd'hui" : n === 1 ? "Demain" : cap(d.toLocaleDateString("fr-FR", {weekday:"long"}));
+    var sub = n < 2 ? d.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"}) : d.toLocaleDateString("fr-FR", {day:"numeric", month:"long"});
+    html += '<section class="day"><h2>' + esc(title) + "<small>" + esc(sub) + "</small></h2>"
+      + (editableSlot(d, "matin") ? slotHtml(d, "matin") : off(d, "matin", "Matin", "Petit-déj"))
+      + (editableSlot(d, "midi") ? slotHtml(d, "midi") : off(d, "midi", "Midi", "Au travail"))
+      + slotHtml(d, "soir") + "</section>";
+  }
+  el.innerHTML = html;
+  el.scrollLeft = keep;
+  $("#set-link").checked = state.settings.linkPlan;
+  $("#set-auto").checked = state.settings.autoLeft;
+  var pend = pendingPortions(), pe = $("#pending");
+  pe.hidden = !pend.length;
+  pe.innerHTML = pend.length ? '<h2>Portions à placer</h2><p class="hint" style="margin:0 0 8px">Touche un créneau et choisis « Reste : … » pour placer une portion.</p><div class="chips">'
+    + pend.map(function(pp){ return '<span class="chip">' + esc(pp.m.name) + " <small>" + esc(slotLabel(pp.from)) + '</small><button type="button" data-act="drop-portion" data-key="' + pp.from + '" aria-label="Finalement pour 1 repas : ' + esc(pp.m.name) + '">×</button></span>'; }).join("")
+    + "</div>" : "";
+}
+
+function renderAisles(){
+  var ae = document.activeElement;
+  if (ae && ae.tagName === "INPUT" && ae.closest && ae.closest("#aisle-list")) return;
+  var n = state.aisles.length;
+  $("#aisle-list").innerHTML = state.aisles.map(function(a, ix){
+    var count = state.items.filter(function(i){ return i.aisle === a.id; }).length;
+    return '<li class="aisle"><span class="dot" aria-hidden="true"></span>'
+      + '<input type="text" data-rename="' + esc(a.id) + '" value="' + esc(a.name) + '" aria-label="Nom du rayon, ' + count + " " + plural(count, "produit", "produits") + '">'
+      + '<button type="button" class="icon-btn" data-act="aisle-up" data-id="' + esc(a.id) + '" aria-label="Monter ' + esc(a.name) + '"' + (ix === 0 ? " disabled" : "") + ">↑</button>"
+      + '<button type="button" class="icon-btn" data-act="aisle-down" data-id="' + esc(a.id) + '" aria-label="Descendre ' + esc(a.name) + '"' + (ix === n - 1 ? " disabled" : "") + ">↓</button>"
+      + '<button type="button" class="icon-btn" data-act="aisle-del" data-id="' + esc(a.id) + '" aria-label="Supprimer ' + esc(a.name) + '"' + (a.id === DIVERS ? " disabled" : "") + ">×</button></li>";
+  }).join("");
+}
+
+function renderDatalist(){
+  $("#itemlist").innerHTML = state.items.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "fr"); })
+    .map(function(i){ return '<option value="' + esc(i.name) + '"></option>'; }).join("");
+}
+
+function setTab(t){
+  ui.tab = t;
+  document.querySelectorAll(".nav button").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.tab === t)); });
+  ["list","plan","meals","aisles"].forEach(function(v){ $("#view-" + v).hidden = v !== t; });
+  window.scrollTo(0, 0);
+}
+
+var toastTimer;
+function toast(msg){
+  var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove("show"); }, Math.min(7000, 2500 + msg.length * 35));
+}
+
+/* ---------- Sheets ---------- */
+var sheet = $("#sheet"), sheetIn = $("#sheet-in"), sheetAbort = null;
+function openSheet(html, mount){
+  if (sheetAbort) { sheetAbort.abort(); sheetAbort = null; }
+  sheetIn.innerHTML = html;
+  if (!sheet.open) { try { sheet.showModal(); } catch (e) { sheet.setAttribute("open", ""); } }
+  if (mount) mount(sheetIn);
+}
+function closeSheet(){
+  if (sheetAbort) { sheetAbort.abort(); sheetAbort = null; }
+  if (sheet.open) { try { sheet.close(); } catch (e) { sheet.removeAttribute("open"); } }
+}
+sheet.addEventListener("click", function(e){ if (e.target === sheet || e.target.closest("[data-close]")) closeSheet(); });
+sheet.addEventListener("close", function(){ if (sheetAbort) { sheetAbort.abort(); sheetAbort = null; } });
+
+function openItemSheet(opts){
+  var id = opts.id || null, it = id ? itemById(id) : null;
+  if (id && !it) return;
+  var sel = it ? it.aisle : "";
+  openSheet('<h2 tabindex="-1" autofocus>' + (it ? "Modifier le produit" : "Nouveau produit") + "</h2>"
+    + '<label class="field"><span>Nom</span><input type="text" id="is-name" value="' + esc(it ? it.name : opts.name || "") + '" autocomplete="off"></label>'
+    + '<label class="field"><span>Rayon</span><select id="is-aisle">' + (sel ? "" : '<option value="" selected disabled>Choisis un rayon</option>') + aisleOptions(sel) + "</select></label>"
+    + '<label class="check"><input type="checkbox" id="is-staple"' + (it && it.staple ? " checked" : "") + "><span>Toujours au placard<br><small>Les repas ne le cochent pas tout seuls, ils te rappellent juste de vérifier.</small></span></label>"
+    + '<p class="err" id="is-err" role="alert"></p>'
+    + '<div class="sheet-actions">' + (it ? '<button class="btn danger" type="button" id="is-del">Supprimer</button>' : "")
+    + '<button class="btn ghost" type="button" data-close>Annuler</button><button class="btn primary" type="button" id="is-save">' + (it ? "Enregistrer" : "Ajouter à la liste") + "</button></div>",
+  function(root){
+    root.querySelector("#is-save").onclick = function(){
+      var nm = cap(root.querySelector("#is-name").value), ai = root.querySelector("#is-aisle").value,
+          st = root.querySelector("#is-staple").checked, err = root.querySelector("#is-err");
+      if (!nm) { err.textContent = "Donne un nom au produit."; return; }
+      if (!ai) { err.textContent = "Choisis le rayon où tu le trouves."; return; }
+      var cur = id ? itemById(id) : null, other = findItem(nm);
+      if (id && !cur) { closeSheet(); return; }
+      if (cur) {
+        if (other && other.id !== cur.id) {
+          remap(state, cur.id, other.id); other.staple = other.staple || st;
+          state.items = state.items.filter(function(x){ return x.id !== cur.id; });
+          closeSheet(); commit(); toast("Fusionné avec " + other.name + ".");
+          return;
+        }
+        cur.name = nm; cur.aisle = ai; cur.staple = st;
+        closeSheet(); commit(); toast("Produit enregistré.");
+      } else {
+        if (other) { addSource(other.id, "m"); bought.delete(other.id); closeSheet(); commit(); toast(other.name + " ajouté à la liste."); return; }
+        var n = {id:uid("i"), name:nm, aisle:ai, staple:st};
+        state.items.push(n); addSource(n.id, "m");
+        closeSheet(); commit(); toast(nm + " ajouté à la liste.");
+      }
+    };
+    var del = root.querySelector("#is-del");
+    if (del) del.onclick = function(){ var cur = itemById(id); if (!cur) { closeSheet(); return; } deleteItem(id); closeSheet(); commit(); toast(cur.name + " supprimé."); };
+  });
+}
+
+function openMealSheet(mid){
+  var m = mid ? mealById(mid) : null;
+  if (mid && !m) return;
+  var draft = {ings: m ? m.items.map(itemById).filter(Boolean).map(function(i){ return {id:i.id, name:i.name, aisle:i.aisle, staple:i.staple}; }) : []};
+  var suggestions = [];
+  openSheet('<h2 tabindex="-1" autofocus>' + (m ? "Modifier le repas" : "Nouveau repas") + "</h2>"
+    + '<label class="field"><span>Nom du repas</span><input type="text" id="ms-name" value="' + esc(m ? m.name : "") + '" placeholder="Par exemple : gratin dauphinois" autocomplete="off"></label>'
+    + '<div class="field"><span>Ingrédients</span><div class="chips" id="ms-chips"></div></div>'
+    + '<div class="addrow"><input type="text" id="ms-add" list="itemlist" placeholder="Ajouter un ingrédient" autocomplete="off" enterkeyhint="done" aria-label="Ajouter un ingrédient"><button class="btn" type="button" id="ms-addbtn">Ajouter</button></div>'
+    + '<select id="ms-aisle" style="margin-top:8px" hidden aria-label="Rayon du nouveau produit"><option value="" selected disabled>Rayon de ce nouveau produit</option>' + aisleOptions("") + "</select>"
+    + '<label class="check" style="margin-top:12px"><input type="checkbox" id="ms-serves"' + (!m || m.serves !== 1 ? " checked" : "") + '><span>Je cuisine pour 2 repas<br><small>Dans le planning, le reste remplit le créneau libre suivant.</small></span></label>'
+    + '<p class="err" id="ms-err" role="alert"></p>'
+    + '<div class="ai-box ai"><button class="btn" type="button" id="ms-ai">Compléter avec Claude</button><p class="hint" id="ms-ai-status" role="status"></p><div class="chips" id="ms-sugg"></div></div>'
+    + '<div class="sheet-actions">' + (m ? '<button class="btn danger" type="button" id="ms-del">Supprimer</button>' : "")
+    + '<button class="btn ghost" type="button" data-close>Annuler</button><button class="btn primary" type="button" id="ms-save">Enregistrer</button></div>',
+  function(root){
+    var chips = root.querySelector("#ms-chips"), add = root.querySelector("#ms-add"), sel = root.querySelector("#ms-aisle"),
+        err = root.querySelector("#ms-err"), sugg = root.querySelector("#ms-sugg"), aiStatus = root.querySelector("#ms-ai-status");
+    function has(name){ var k = norm(name); return draft.ings.some(function(g){ return norm(g.name) === k; }); }
+    function drawChips(){
+      chips.innerHTML = draft.ings.length ? draft.ings.map(function(g, ix){
+        return '<span class="chip">' + esc(g.name) + (g.staple ? " <small>placard</small>" : "") + '<button type="button" data-ix="' + ix + '" aria-label="Retirer ' + esc(g.name) + '">×</button></span>';
+      }).join("") : '<span class="hint" style="margin:0">Aucun ingrédient pour l\'instant.</span>';
+    }
+    function drawSugg(){
+      sugg.innerHTML = suggestions.map(function(g, ix){ return '<button type="button" class="chip sugg" data-six="' + ix + '">+ ' + esc(g.name) + (g.staple ? " (placard)" : "") + "</button>"; }).join("");
+    }
+    chips.onclick = function(e){ var b = e.target.closest("button[data-ix]"); if (!b) return; draft.ings.splice(+b.dataset.ix, 1); drawChips(); };
+    sugg.onclick = function(e){
+      var b = e.target.closest("[data-six]"); if (!b) return;
+      var g = suggestions[+b.dataset.six]; if (g && !has(g.name)) draft.ings.push(g);
+      suggestions.splice(+b.dataset.six, 1); drawSugg(); drawChips();
+    };
+    add.oninput = function(){ var v = add.value.trim(); sel.hidden = !v || !!findItem(v); err.textContent = ""; };
+    function addIng(){
+      var v = cap(add.value); if (!v) return;
+      if (has(v)) { err.textContent = "Cet ingrédient est déjà dans le repas."; return; }
+      var ex = findItem(v);
+      if (ex) draft.ings.push({id:ex.id, name:ex.name, aisle:ex.aisle, staple:ex.staple});
+      else {
+        if (!sel.value) { sel.hidden = false; err.textContent = "Choisis le rayon de ce nouveau produit."; sel.focus(); return; }
+        draft.ings.push({name:v, aisle:sel.value, staple:false});
+      }
+      add.value = ""; sel.selectedIndex = 0; sel.hidden = true; err.textContent = ""; drawChips();
+    }
+    root.querySelector("#ms-addbtn").onclick = addIng;
+    add.onkeydown = function(e){ if (e.key === "Enter") { e.preventDefault(); addIng(); } };
+    sel.onchange = function(){ if (add.value.trim()) addIng(); };
+
+    var aiBtn = root.querySelector("#ms-ai");
+    aiBtn.onclick = function(){
+      var nm = root.querySelector("#ms-name").value.trim();
+      if (!nm) { err.textContent = "Donne d'abord un nom au repas."; return; }
+      if (!sample) { aiStatus.textContent = "Claude n'est pas disponible ici."; return; }
+      var ctl = new AbortController(); sheetAbort = ctl;
+      aiBtn.disabled = true; aiStatus.textContent = "Claude réfléchit…";
+      var prompt = "Tu aides à compléter la liste d'ingrédients d'un repas fait maison, cuisiné en France.\n"
+        + "Repas : " + nm + "\n"
+        + "Ingrédients déjà prévus : " + (draft.ings.map(function(g){ return g.name; }).join(", ") || "aucun") + "\n"
+        + "Rayons possibles (recopie exactement l'un d'eux) : " + aisleNamesText() + "\n"
+        + "Produits que la personne achète déjà (si l'un convient, réutilise exactement son nom) : " + catalogText() + "\n\n"
+        + "Propose uniquement les ingrédients qui manquent pour une version simple et classique de ce repas, sans quantités. " + PLACARD_RULE + "\n"
+        + 'Réponds uniquement avec un tableau JSON, par exemple : [{"name":"Oignons","rayon":"Fruits et légumes","placard":false}]';
+      sample.json(prompt, {modelTier:"quick", signal:ctl.signal}).then(function(res){
+        suggestions = (Array.isArray(res) ? res : []).filter(function(x){ return x && typeof x.name === "string" && x.name.trim(); }).map(toIng)
+          .filter(function(g, ix, arr){ return !has(g.name) && arr.findIndex(function(o){ return norm(o.name) === norm(g.name); }) === ix; });
+        aiStatus.textContent = suggestions.length ? "Touche un ingrédient pour l'ajouter au repas." : "Rien ne semble manquer.";
+        drawSugg();
+      }).catch(function(e){ aiStatus.textContent = aiErr(e); }).then(function(){ aiBtn.disabled = false; });
+    };
+
+    root.querySelector("#ms-save").onclick = function(){
+      var nm = cap(root.querySelector("#ms-name").value);
+      if (!nm) { err.textContent = "Donne un nom au repas."; return; }
+      var cur = mid ? mealById(mid) : null;
+      if (mid && !cur) { closeSheet(); return; }
+      var clash = state.meals.find(function(x){ return norm(x.name) === norm(nm) && (!cur || x.id !== cur.id); });
+      if (clash) { err.textContent = "Un repas « " + clash.name + " » existe déjà."; return; }
+      var ids = [];
+      draft.ings.forEach(function(g){ var id = (g.id && itemById(g.id)) ? g.id : getOrCreateItem(g.name, g.aisle, g.staple); if (ids.indexOf(id) < 0) ids.push(id); });
+      var serves = root.querySelector("#ms-serves").checked ? 2 : 1;
+      if (cur) {
+        if (plannedSet()[cur.id]) {
+          cur.items.filter(function(i){ return ids.indexOf(i) < 0; }).forEach(function(i){ removeSource(i, cur.id); });
+          ids.filter(function(i){ return cur.items.indexOf(i) < 0; }).forEach(function(i){ var it = itemById(i); if (it && !it.staple) addSource(i, cur.id); });
+        }
+        cur.name = nm; cur.items = ids; cur.serves = serves;
+        closeSheet(); commit(); toast("Repas enregistré.");
+      } else {
+        state.meals.push({id:uid("m"), name:nm, items:ids, serves:serves});
+        closeSheet(); commit(); toast(nm + " ajouté à tes repas.");
+      }
+    };
+    var del = root.querySelector("#ms-del");
+    if (del) del.onclick = function(){
+      var cur = mealById(mid); if (!cur) { closeSheet(); return; }
+      var before = plannedSet(true);
+      state.planned = state.planned.filter(function(x){ return x !== cur.id; });
+      Object.keys(state.plan).forEach(function(k){ if (state.plan[k].m === cur.id) delete state.plan[k]; });
+      applyDiff(before, plannedSet());
+      state.meals = state.meals.filter(function(x){ return x.id !== cur.id; });
+      closeSheet(); commit(); toast(cur.name + " supprimé.");
+    };
+    drawChips();
+  });
+}
+
+function openIdeasSheet(){
+  if (!sample) return;
+  openSheet('<h2 tabindex="-1" autofocus>Des idées de repas</h2><p class="hint" id="id-status" role="status"></p><div class="ideas" id="id-list"></div>'
+    + '<div class="sheet-actions"><button class="btn ghost" type="button" data-close>Fermer</button><button class="btn" type="button" id="id-more" disabled>Autres idées</button></div>',
+  function(root){
+    var status = root.querySelector("#id-status"), list = root.querySelector("#id-list"), more = root.querySelector("#id-more"), ideas = [];
+    function draw(){
+      list.innerHTML = ideas.map(function(d, ix){
+        return '<article class="idea"><h3>' + esc(d.name) + "</h3><p>" + esc(d.ings.map(function(g){ return g.name; }).join(", ")) + "</p>"
+          + '<button class="btn small' + (d.added ? "" : " primary") + '" type="button" data-iix="' + ix + '"' + (d.added ? " disabled" : "") + ">" + (d.added ? "Ajouté à tes repas" : "Ajouter à mes repas") + "</button></article>";
+      }).join("");
+    }
+    list.onclick = function(e){
+      var b = e.target.closest("[data-iix]"); if (!b) return;
+      var d = ideas[+b.dataset.iix]; if (!d || d.added) return;
+      if (state.meals.some(function(x){ return norm(x.name) === norm(d.name); })) { d.added = true; draw(); return; }
+      var ids = [];
+      d.ings.forEach(function(g){ var id = (g.id && itemById(g.id)) ? g.id : getOrCreateItem(g.name, g.aisle, g.staple); if (ids.indexOf(id) < 0) ids.push(id); });
+      state.meals.push({id:uid("m"), name:d.name, items:ids, serves:2});
+      d.added = true; commit(); draw(); toast(d.name + " ajouté à tes repas.");
+    };
+    function run(){
+      var ctl = new AbortController(); sheetAbort = ctl;
+      status.textContent = "Claude réfléchit…"; more.disabled = true; list.innerHTML = "";
+      var month = new Date().toLocaleDateString("fr-FR", {month:"long"});
+      var prompt = "Propose 4 idées de repas simples, variés et faisables en semaine (45 minutes maximum), adaptés à la saison : nous sommes en " + month + ", en France.\n"
+        + "Évite ces repas déjà enregistrés : " + (state.meals.map(function(m){ return m.name; }).join(", ") || "aucun") + ".\n"
+        + "Quand c'est pertinent, réutilise des produits que la personne achète déjà, en recopiant exactement leur nom : " + catalogText() + ".\n"
+        + "Pour chaque repas, donne la liste complète des ingrédients sans quantités, avec leur rayon (recopie exactement l'un de ceux-ci : " + aisleNamesText() + "). " + PLACARD_RULE + "\n"
+        + 'Réponds uniquement avec un tableau JSON, par exemple : [{"name":"Gratin de courgettes","ingredients":[{"name":"Courgettes","rayon":"Fruits et légumes","placard":false}]}]';
+      sample.json(prompt, {modelTier:"default", cache:false, signal:ctl.signal}).then(function(res){
+        ideas = (Array.isArray(res) ? res : []).filter(function(x){ return x && typeof x.name === "string" && Array.isArray(x.ingredients); }).slice(0, 6).map(function(x){
+          return {name:cap(x.name), ings:x.ingredients.filter(function(g){ return g && typeof g.name === "string" && g.name.trim(); }).map(toIng)};
+        });
+        status.textContent = ideas.length ? "Ajoute celles qui te tentent, puis coche-les pour la semaine." : "Aucune idée reçue. Demande d'autres idées.";
+        draw();
+      }).catch(function(e){ if (e && e.code === "cancelled") return; status.textContent = aiErr(e); }).then(function(){ more.disabled = false; });
+    }
+    more.onclick = run;
+    run();
+  });
+}
+
+function parseLines(text){
+  var seen = {}, out = [];
+  String(text || "").split(/[\n,;]+/).forEach(function(l){
+    var v = l.replace(/^\s*(?:[-*•·◦▪–]|\[[ xX]?\]|☐|☑|✓|✔|\d+[.)])\s*/, "").trim();
+    var k = norm(v); if (!k || seen[k]) return; seen[k] = 1; out.push(cap(v));
+  });
+  return out;
+}
+function openImportSheet(){
+  openSheet('<h2 tabindex="-1" autofocus>Importer une liste</h2>'
+    + '<p class="hint">Colle ta liste actuelle, un produit par ligne ou séparés par des virgules. Les doublons sont fusionnés.<span class="ai"> Claude range chaque produit dans son rayon.</span></p>'
+    + '<textarea id="im-text" rows="8" placeholder="tomates&#10;lait&#10;pâtes&#10;…" aria-label="Liste à importer"></textarea>'
+    + '<label class="check" style="margin-top:12px"><input type="checkbox" id="im-check"><span>Les cocher aussi (à acheter)</span></label>'
+    + '<p class="hint" id="im-status" role="status"></p><div class="preview" id="im-preview"></div>'
+    + '<div class="sheet-actions"><button class="btn ghost" type="button" data-close>Annuler</button><button class="btn" type="button" id="im-plain">Ajouter sans trier</button><button class="btn primary ai" type="button" id="im-ai">Trier avec Claude</button></div>',
+  function(root){
+    var text = root.querySelector("#im-text"), status = root.querySelector("#im-status"), preview = root.querySelector("#im-preview"), aiBtn = root.querySelector("#im-ai");
+    var pending = null;
+    function apply(list){
+      var check = root.querySelector("#im-check").checked, before = state.items.length, again = 0;
+      list.forEach(function(g){
+        if (findItem(g.name)) again++;
+        var id = getOrCreateItem(g.name, g.aisle, g.staple);
+        if (check) { addSource(id, "m"); bought.delete(id); }
+      });
+      var created = state.items.length - before;
+      closeSheet(); commit();
+      toast(created + " " + plural(created, "nouveau produit", "nouveaux produits") + (again ? ", " + again + " " + plural(again, "déjà présent", "déjà présents") : "") + ".");
+    }
+    root.querySelector("#im-plain").onclick = function(){
+      var lines = parseLines(text.value);
+      if (!lines.length) { status.textContent = "Colle au moins un produit."; return; }
+      apply(lines.map(function(n){ var ex = findItem(n); return ex ? {name:ex.name, aisle:ex.aisle, staple:ex.staple} : {name:n, aisle:DIVERS, staple:false}; }));
+    };
+    aiBtn.onclick = function(){
+      if (pending) { apply(pending); return; }
+      var lines = parseLines(text.value);
+      if (!lines.length) { status.textContent = "Colle au moins un produit."; return; }
+      if (!sample) { status.textContent = "Claude n'est pas disponible ici."; return; }
+      var ctl = new AbortController(); sheetAbort = ctl;
+      aiBtn.disabled = true; status.textContent = "Claude range ta liste…";
+      var prompt = "Tu ranges une liste de courses pour un supermarché en France.\n"
+        + "Rayons (recopie exactement l'un de ces noms) : " + aisleNamesText() + "\n"
+        + "Produits déjà connus (si un élément correspond à l'un d'eux, réutilise exactement ce nom) : " + catalogText() + "\n"
+        + "Liste à ranger :\n" + lines.join("\n") + "\n\n"
+        + "Corrige l'orthographe, garde des noms courts et naturels, fusionne les doublons et les variantes du même produit, et ignore ce qui n'est pas un produit. " + PLACARD_RULE + "\n"
+        + 'Réponds uniquement avec un tableau JSON, par exemple : [{"name":"Tomates","rayon":"Fruits et légumes","placard":false}]';
+      sample.json(prompt, {modelTier:"quick", signal:ctl.signal}).then(function(res){
+        var seen = {};
+        pending = (Array.isArray(res) ? res : []).filter(function(x){ return x && typeof x.name === "string" && x.name.trim(); }).map(toIng)
+          .filter(function(g){ var k = norm(g.name); if (seen[k]) return false; seen[k] = 1; return true; });
+        if (!pending.length) { pending = null; status.textContent = "Aucun produit reconnu. Vérifie la liste collée."; return; }
+        var groups = {};
+        pending.forEach(function(g){ (groups[g.aisle] = groups[g.aisle] || []).push(g.name); });
+        preview.innerHTML = state.aisles.filter(function(a){ return groups[a.id]; }).map(function(a){ return "<p><strong>" + esc(a.name) + "</strong> : " + esc(groups[a.id].join(", ")) + "</p>"; }).join("");
+        status.textContent = pending.length + " " + plural(pending.length, "produit rangé", "produits rangés") + ". Tu pourras changer un rayon plus tard dans le catalogue.";
+        aiBtn.textContent = "Ajouter " + pending.length + " " + plural(pending.length, "produit", "produits");
+        text.readOnly = true;
+      }).catch(function(e){ status.textContent = aiErr(e); }).then(function(){ aiBtn.disabled = false; });
+    };
+  });
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  var id = b.dataset.id;
+  switch (b.dataset.act) {
+    case "tab": setTab(b.dataset.tab); break;
+    case "mode": ui.mode = b.dataset.mode; renderList(); break;
+    case "tick": toggleItem(id); break;
+    case "edit-item": openItemSheet({id:id}); break;
+    case "quick-add": quickAdd(); break;
+    case "meal": toggleMeal(id); break;
+    case "edit-meal": openMealSheet(id); break;
+    case "new-meal": openMealSheet(null); break;
+    case "ideas": openIdeasSheet(); break;
+    case "new-week": newWeek(); break;
+    case "open-slot": openSlot(b.dataset.key); break;
+    case "drop-portion": dropPortion(b.dataset.key); break;
+    case "clear-plan": clearPlan(); break;
+    case "clear-bought": bought.clear(); renderList(); break;
+    case "import": openImportSheet(); break;
+    case "goto-meals": setTab("meals"); break;
+    case "goto-all": ui.mode = "all"; renderList(); window.scrollTo(0, 0); break;
+    case "aisle-up": moveAisle(id, -1); break;
+    case "aisle-down": moveAisle(id, 1); break;
+    case "aisle-del": deleteAisle(id); break;
+    case "add-aisle": addAisle(); break;
+  }
+});
+document.addEventListener("change", function(e){
+  var t = e.target;
+  if (t.id === "set-link") { setSetting("linkPlan", t.checked); return; }
+  if (t.id === "set-auto") { setSetting("autoLeft", t.checked); return; }
+  if (t.matches && t.matches("[data-plan]")) { var k = t.dataset.plan, v = t.value; t.blur(); setPlan(k, v); return; }
+  if (!t.matches || !t.matches("[data-rename]")) return;
+  var a = aisleById(t.dataset.rename), v = cap(t.value);
+  if (!a) return;
+  if (!v || v === a.name) { t.value = a.name; return; }
+  a.name = v; t.blur(); commit();
+});
+$("#qa").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); quickAdd(); } });
+$("#new-aisle").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); addAisle(); } });
+
+setSync("local");
+if (prunePlan()) { state.updatedAt = Math.max(Date.now(), state.updatedAt + 1); saveLocal(); }
+render();
+document.addEventListener("visibilitychange", function(){ if (!document.hidden && prunePlan()) commit(); else if (!document.hidden) renderPlan(); });
+initCloud();
+initAI();
+})();
+</script>
+</body>
+</html>
