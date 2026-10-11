@@ -55,6 +55,12 @@ input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--
 textarea{resize:vertical;line-height:1.5}
 select{appearance:auto}
 
+.ac-wrap{position:relative;flex:1;min-width:0}
+.ac-list{list-style:none;margin:0;position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:15;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:0;max-height:260px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.ac-item{display:block;width:100%;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;padding:12px 14px;min-height:44px}
+.ac-item:first-child{border-top:0}
+.ac-item:active{background:var(--fill)}
+
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:600;border-radius:999px;padding:10px 18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);white-space:nowrap}
 .btn.primary{background:var(--route);border-color:var(--route);color:var(--on-route)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
@@ -195,7 +201,10 @@ body.has-ai .ai-box{display:flex}
         <button type="button" data-act="mode" data-mode="all" aria-pressed="false">Catalogue</button>
       </div>
       <div class="addrow">
-        <input type="text" id="qa" list="itemlist" placeholder="Ajouter à la liste…" autocomplete="off" enterkeyhint="done" aria-label="Ajouter un produit à la liste">
+        <div class="ac-wrap">
+          <input type="text" id="qa" placeholder="Ajouter à la liste…" autocomplete="off" enterkeyhint="done" aria-label="Ajouter un produit à la liste" role="combobox" aria-expanded="false" aria-controls="qa-sugg" aria-autocomplete="list">
+          <ul class="ac-list" id="qa-sugg" role="listbox" hidden></ul>
+        </div>
         <button class="btn primary" type="button" data-act="quick-add">Ajouter</button>
       </div>
       <ol class="route" id="route"></ol>
@@ -643,7 +652,7 @@ function deleteItem(id){
 function quickAdd(){
   var inp = $("#qa"), name = inp.value.trim(); if (!name) return;
   var ex = findItem(name);
-  inp.value = "";
+  inp.value = ""; hideSugg();
   if (ex) {
     var was = isNeeded(ex.id);
     addSource(ex.id, "m"); bought.delete(ex.id); commit();
@@ -651,6 +660,39 @@ function quickAdd(){
   } else {
     openItemSheet({name:cap(name)});
   }
+}
+function matchItems(q){
+  var k = norm(q); if (!k) return [];
+  var terms = k.split(" ").filter(Boolean);
+  return state.items.filter(function(i){
+    var n = norm(i.name);
+    return terms.every(function(t){ return n.indexOf(t) >= 0; });
+  }).sort(function(a, b){
+    var an = norm(a.name), bn = norm(b.name);
+    var as = an.indexOf(k) === 0 ? 0 : 1, bs = bn.indexOf(k) === 0 ? 0 : 1;
+    if (as !== bs) return as - bs;
+    return a.name.localeCompare(b.name, "fr");
+  }).slice(0, 8);
+}
+function hideSugg(){
+  var box = $("#qa-sugg"); box.hidden = true; box.innerHTML = "";
+  $("#qa").setAttribute("aria-expanded", "false");
+}
+function renderSugg(){
+  var inp = $("#qa"), box = $("#qa-sugg"), matches = matchItems(inp.value);
+  if (!matches.length) { hideSugg(); return; }
+  box.innerHTML = matches.map(function(i){
+    return '<li role="option"><button type="button" class="ac-item" data-act="pick-item" data-id="' + esc(i.id) + '">' + esc(i.name) + "</button></li>";
+  }).join("");
+  box.hidden = false;
+  inp.setAttribute("aria-expanded", "true");
+}
+function pickItem(id){
+  var it = itemById(id); if (!it) return;
+  var was = isNeeded(it.id);
+  addSource(it.id, "m"); bought.delete(it.id); commit();
+  toast(was ? it.name + " est déjà sur la liste." : it.name + " ajouté à la liste.");
+  var inp = $("#qa"); inp.value = ""; hideSugg(); inp.focus();
 }
 function moveAisle(id, d){
   var i = state.aisles.findIndex(function(a){ return a.id === id; }), j = i + d;
@@ -1116,6 +1158,7 @@ document.addEventListener("click", function(e){
     case "tick": toggleItem(id); break;
     case "edit-item": openItemSheet({id:id}); break;
     case "quick-add": quickAdd(); break;
+    case "pick-item": pickItem(id); break;
     case "meal": toggleMeal(id); break;
     case "edit-meal": openMealSheet(id); break;
     case "new-meal": openMealSheet(null); break;
@@ -1145,7 +1188,10 @@ document.addEventListener("change", function(e){
   if (!v || v === a.name) { t.value = a.name; return; }
   a.name = v; t.blur(); commit();
 });
-$("#qa").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); quickAdd(); } });
+$("#qa").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); quickAdd(); } else if (e.key === "Escape") { hideSugg(); } });
+$("#qa").addEventListener("input", renderSugg);
+$("#qa").addEventListener("focus", renderSugg);
+$("#qa").addEventListener("blur", function(){ setTimeout(hideSugg, 150); });
 $("#new-aisle").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); addAisle(); } });
 
 setSync("local");
