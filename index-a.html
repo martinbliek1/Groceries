@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Courses — Direction A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --ink:#0B0B0C; --line:#0B0B0C; --muted:#6B6B6E; --green:#1FAE5A; --fill:#F1F1EF;
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{overflow-x:hidden;width:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Space Grotesk",system-ui,sans-serif;font-size:17px;line-height:1.35;-webkit-text-size-adjust:100%}
+button{font:inherit;cursor:pointer;color:inherit;background:none;border:0}
+[hidden]{display:none !important}
+svg.defs{position:absolute;width:0;height:0}
+.note{background:var(--ink);color:#fff;font-size:.78rem;padding:8px 16px;text-align:center;letter-spacing:.02em}
+.wrap{max-width:560px;margin:0 auto;padding:0 18px}
+.top{padding:22px 0 10px;border-bottom:3px solid var(--line)}
+.top h1{margin:0;font-size:2.6rem;font-weight:700;letter-spacing:-0.04em;line-height:.9;text-transform:uppercase}
+.top h1 span{color:var(--green)}
+.top p{margin:10px 0 0;color:var(--muted);font-size:.92rem;font-weight:500}
+main{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+
+.seg{display:flex;gap:0;margin:18px 0 6px;border:3px solid var(--line)}
+.seg button{flex:1;padding:12px 4px;font-weight:700;font-size:.92rem;text-transform:uppercase;letter-spacing:.03em;border-right:3px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+/* ---- Liste ---- */
+.aisle-group{display:flex;gap:16px;padding:22px 0;border-bottom:3px solid var(--line)}
+.aisle-group:last-child{border-bottom:0}
+.aisle-num{flex:none;width:44px;font-family:"Fraunces",serif;font-weight:600;font-size:1.9rem;line-height:1;color:var(--green);font-variant-numeric:oldstyle-nums}
+.aisle-body{flex:1;min-width:0}
+.aisle-name{margin:0 0 12px;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.04em}
+.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.item{display:flex;align-items:center;gap:12px;padding:10px 0}
+.tickbox{flex:none;width:28px;height:28px;border:3px solid var(--ink);display:inline-flex;align-items:center;justify-content:center}
+.tickbox svg{width:20px;height:20px;overflow:visible}
+.tickbox path{fill:none;stroke:var(--green);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:36;stroke-dashoffset:36;transition:stroke-dashoffset .28s cubic-bezier(.3,.9,.4,1)}
+.item.on .tickbox path{stroke-dashoffset:0}
+.item.on .tickbox{border-color:var(--green)}
+.iname{flex:1 1 auto;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.item.got .iname{color:var(--muted);text-decoration:line-through 3px var(--muted)}
+.qty{flex:none;display:flex;align-items:center;gap:0;border:3px solid var(--line)}
+.qty button{width:30px;height:30px;font-weight:700;font-size:1.1rem}
+.qty button:first-child{border-right:3px solid var(--line)}
+.qty button:last-child{border-left:3px solid var(--line)}
+.qty span{min-width:26px;text-align:center;font-weight:700}
+.pill{flex:none;border:3px solid var(--line);padding:5px 10px;font-weight:700;font-size:.8rem;text-transform:uppercase}
+.pill.set{background:var(--green);border-color:var(--green);color:#fff}
+
+/* ---- Planning ---- */
+.days{display:grid;grid-auto-flow:column;grid-auto-columns:76%;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;margin:18px -18px 0;padding:4px 18px 10px;scroll-padding:0 18px}
+.day{scroll-snap-align:start;border:3px solid var(--line);display:flex;flex-direction:column}
+.day.today{box-shadow:6px 6px 0 var(--green)}
+.day-h{padding:12px 14px;border-bottom:3px solid var(--line);display:flex;align-items:baseline;justify-content:space-between}
+.day-h b{font-family:"Fraunces",serif;font-style:italic;font-weight:600;font-size:1.25rem}
+.day-h small{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+.slot{padding:12px 14px;border-bottom:2px solid var(--fill)}
+.slot:last-child{border-bottom:0}
+.slot-k{font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
+.slot-v{font-weight:700;margin-top:3px;line-height:1.25}
+.slot-left{font-size:.76rem;color:var(--green);font-weight:700;margin-top:2px}
+
+/* ---- Repas ---- */
+.meals{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:14px}
+.meal{border:3px solid var(--line);padding:16px}
+.meal-name{font-family:"Fraunces",serif;font-weight:600;font-size:1.3rem;margin:0 0 8px;line-height:1.15}
+.meal-tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border:2px solid var(--line);padding:4px 9px;font-size:.78rem;font-weight:700;text-transform:uppercase}
+.meal-serves{float:right;background:var(--green);color:#fff;font-size:.72rem;font-weight:700;text-transform:uppercase;padding:4px 9px}
+
+/* ---- Nav ---- */
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:3px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-in{max-width:560px;margin:0 auto;display:flex}
+.nav button{flex:1;padding:14px 4px 10px;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);border-top:4px solid transparent;margin-top:-3px}
+.nav button[aria-selected="true"]{color:var(--ink);border-top-color:var(--green)}
+</style>
+</head>
+<body>
+<svg class="defs"><filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="2" seed="4" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/>
+</filter></svg>
+<div class="note">Direction A — Swiss / Bauhaus. Prototype visuel, rien n'est sauvegardé.</div>
+<div class="wrap">
+  <header class="top">
+    <h1>Course<span>s</span></h1>
+    <p id="summary">7 produits à acheter</p>
+  </header>
+
+  <section id="view-list">
+    <div class="seg" role="group">
+      <button type="button" data-tab2="route" aria-pressed="true">À acheter</button>
+      <button type="button" data-tab2="all" aria-pressed="false">Catalogue</button>
+    </div>
+    <div id="aisles-out"></div>
+  </section>
+
+  <section id="view-plan" hidden>
+    <p style="color:var(--muted);font-size:.88rem;margin:18px 0 0">Glisse pour voir les jours suivants.</p>
+    <div class="days" id="days-out"></div>
+  </section>
+
+  <section id="view-meals" hidden>
+    <ul class="meals" id="meals-out"></ul>
+  </section>
+</div>
+
+<nav class="nav">
+  <div class="nav-in" role="tablist">
+    <button type="button" role="tab" data-tab="list" aria-selected="true">Liste</button>
+    <button type="button" role="tab" data-tab="plan" aria-selected="false">Planning</button>
+    <button type="button" role="tab" data-tab="meals" aria-selected="false">Repas</button>
+  </div>
+</nav>
+
+<script>
+(function(){
+"use strict";
+var TICK = '<svg viewBox="0 0 20 20"><path filter="url(#rough)" d="M3 10.5 L7.5 15.5 L17 4"/></svg>';
+
+var AISLES = [
+  {num:"01", name:"Fruits", items:[
+    {name:"Bananes", on:true, qty:3},
+    {name:"Avocats", on:true, qty:2}
+  ]},
+  {num:"02", name:"Légumes", items:[
+    {name:"Tomates cerises", on:true, qty:2, why:"Gnocchis poêlés"},
+    {name:"Courgettes", on:true, qty:3, why:"Lentilles, sauce tomate"},
+    {name:"Épinards frais", on:false, got:true}
+  ]},
+  {num:"07", name:"Viandes", items:[
+    {name:"Lardons ou pancetta", on:true, pill:"200 g", why:"Gnocchis poêlés"},
+    {name:"Steaks hachés", on:true, pill:null}
+  ]},
+  {num:"09", name:"Épicerie salée", items:[
+    {name:"Ail en poudre", on:true, pill:null}
+  ]},
+  {num:"19", name:"Entretien", items:[
+    {name:"Vanish Oxi Action", on:true, pill:null}
+  ]}
+];
+
+var DAYS = [
+  {name:"Aujourd'hui", sub:"25 oct.", today:true, slots:[
+    {k:"Midi", v:"Tartines fromage frais et œufs brouillés"},
+    {k:"Soir", v:"Lentilles, sauce tomate et courgettes"}
+  ]},
+  {name:"Demain", sub:"26 oct.", slots:[
+    {k:"Midi", v:"Lentilles, sauce tomate et courgettes", left:"Reste d'hier soir"},
+    {k:"Soir", v:"Gnocchis poêlés, tomates cerises, lardons et parmesan"}
+  ]},
+  {name:"Mercredi", sub:"28 oct.", slots:[
+    {k:"Midi", v:"Gnocchis poêlés…", left:"Reste de mardi soir"},
+    {k:"Soir", v:"Curry chicken naan"}
+  ]}
+];
+
+var MEALS = [
+  {name:"Croque pain complet, comté, jambon et champignons", tags:["Pain complet","Comté","Jambon","Champignons"], serves:2},
+  {name:"Tartine pain complet, épinards, feta et tomates", tags:["Pain complet","Épinards","Feta","Tomates"], serves:2},
+  {name:"Curry chicken naan", tags:["Pâte à pizza","Poulet","Curry","Crème","Fromage râpé"], serves:2},
+  {name:"Shakshuka", tags:["Œufs","Sauce tomate","Poivrons","Cumin"], serves:2}
+];
+
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+function renderAisles(){
+  document.getElementById("aisles-out").innerHTML = AISLES.map(function(a){
+    return '<div class="aisle-group"><div class="aisle-num">' + a.num + '</div><div class="aisle-body">'
+      + '<p class="aisle-name">' + esc(a.name) + '</p>'
+      + '<ul class="items">' + a.items.map(function(it, ix){
+        var on = !!it.on, got = !!it.got;
+        var extra = it.qty ? '<div class="qty"><button type="button" data-act="dec" data-aisle="'+a.num+'" data-ix="'+ix+'">–</button><span>'+(it.qty||1)+'</span><button type="button" data-act="inc" data-aisle="'+a.num+'" data-ix="'+ix+'">+</button></div>'
+          : (it.pill !== undefined ? '<button type="button" class="pill'+(it.pill?' set':'')+'" data-act="pill" data-aisle="'+a.num+'" data-ix="'+ix+'">'+(it.pill ? esc(it.pill) : '+ quantité')+'</button>' : '');
+        return '<li class="item'+(on?' on':'')+(got?' got':'')+'"><button type="button" class="tickbox" data-act="tick" data-aisle="'+a.num+'" data-ix="'+ix+'">'+TICK+'</button><span class="iname">'+esc(it.name)+'</span>'+extra+'</li>';
+      }).join("") + "</ul></div></div>";
+  }).join("");
+}
+function renderDays(){
+  document.getElementById("days-out").innerHTML = DAYS.map(function(d){
+    return '<div class="day'+(d.today?' today':'')+'"><div class="day-h"><b>'+esc(d.name)+'</b><small>'+esc(d.sub)+'</small></div>'
+      + d.slots.map(function(s){
+        return '<div class="slot"><div class="slot-k">'+esc(s.k)+'</div><div class="slot-v">'+esc(s.v)+'</div>'
+          + (s.left ? '<div class="slot-left">'+esc(s.left)+'</div>' : '') + '</div>';
+      }).join("") + "</div>";
+  }).join("");
+}
+function renderMeals(){
+  document.getElementById("meals-out").innerHTML = MEALS.map(function(m){
+    return '<li class="meal"><span class="meal-serves">Pour '+m.serves+'</span><p class="meal-name">'+esc(m.name)+'</p>'
+      + '<div class="meal-tags">' + m.tags.map(function(t){ return '<span class="tag">'+esc(t)+'</span>'; }).join("") + "</div></li>";
+  }).join("");
+}
+
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-tab]");
+  if (b) {
+    document.querySelectorAll('[data-tab]').forEach(function(x){ x.setAttribute("aria-selected", String(x===b)); });
+    ["list","plan","meals"].forEach(function(t){ document.getElementById("view-"+t).hidden = (t !== b.dataset.tab); });
+    return;
+  }
+  var t2 = e.target.closest("[data-tab2]");
+  if (t2) { document.querySelectorAll('[data-tab2]').forEach(function(x){ x.setAttribute("aria-pressed", String(x===t2)); }); return; }
+
+  var tick = e.target.closest('[data-act="tick"]');
+  if (tick) {
+    var a = AISLES.find(function(x){ return x.num === tick.dataset.aisle; });
+    var it = a.items[+tick.dataset.ix];
+    it.on = !it.on; renderAisles(); return;
+  }
+  var inc = e.target.closest('[data-act="inc"],[data-act="dec"]');
+  if (inc) {
+    var a2 = AISLES.find(function(x){ return x.num === inc.dataset.aisle; });
+    var it2 = a2.items[+inc.dataset.ix];
+    it2.qty = Math.max(1, (it2.qty||1) + (inc.dataset.act === "inc" ? 1 : -1));
+    renderAisles(); return;
+  }
+  var pill = e.target.closest('[data-act="pill"]');
+  if (pill) {
+    var a3 = AISLES.find(function(x){ return x.num === pill.dataset.aisle; });
+    var it3 = a3.items[+pill.dataset.ix];
+    it3.pill = it3.pill ? null : "500 g";
+    renderAisles(); return;
+  }
+});
+
+renderAisles(); renderDays(); renderMeals();
+})();
+</script>
+</body>
+</html>
