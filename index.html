@@ -1948,10 +1948,14 @@ function cancelLp(animate){
   var l = lp; lp = null;
   clearTimeout(l.timer); clearTimeout(l.pressT); cancelAnimationFrame(l.raf);
   if (!l.pv) return;
-  function done(){ l.pv.remove(); l.ov.remove(); l.el.classList.remove("cm-src"); }
+  var finished = false;
+  function done(){ if (finished) return; finished = true; l.pv.remove(); l.ov.remove(); l.el.classList.remove("cm-src"); }
   if (!animate) { done(); return; }
+  l.ov.style.pointerEvents = "none";
+  setTimeout(done, 260);
   var from = l.e || 0, t0 = performance.now();
   (function back(){
+    if (finished) return;
     var t = Math.min(1, (performance.now() - t0) / 180);
     pressApply(l, from * (1 - t) * (1 - t));
     if (t < 1) requestAnimationFrame(back); else done();
