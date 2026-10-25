@@ -322,6 +322,8 @@ body.has-ai .ai-box{display:flex}
     <div class="cat-actions">
       <button type="button" class="row-btn" data-act="new-aisle">Nouveau rayon</button>
       <button type="button" class="row-btn" data-act="import">Importer une liste</button>
+      <button type="button" class="row-btn" data-act="backup">Exporter une sauvegarde</button>
+      <button type="button" class="row-btn" data-act="restore">Restaurer une sauvegarde</button>
     </div>
     <p class="gf">Les rayons suivent l'ordre de ton magasin, et ta liste suit ce trajet. Maintiens un rayon ou un produit appuyé pour le modifier, ou glisse-le pour le déplacer.</p>
     <p class="gf" id="sync"></p>
@@ -1482,6 +1484,80 @@ function openImportSheet(){
   });
 }
 
+/* ---------- Backup: export / restore the whole list data ---------- */
+function backupText(){ return JSON.stringify({app:"courses", version:1, savedAt:new Date().toISOString(), state:state}); }
+function parseBackup(text){
+  text = String(text || "");
+  var a = text.indexOf("{"), b = text.lastIndexOf("}");
+  if (a < 0 || b <= a) return null;
+  var raw; try { raw = JSON.parse(text.slice(a, b + 1)); } catch (e) { return null; }
+  if (raw && raw.state && typeof raw.state === "object") raw = raw.state;
+  if (!raw || !Array.isArray(raw.items) || !Array.isArray(raw.aisles) || !raw.items.length) return null;
+  var s = sanitize(raw);
+  return s.items.length ? s : null;
+}
+function countsText(s){ return s.items.length + " " + plural(s.items.length, "produit", "produits") + " · " + s.meals.length + " repas · " + s.aisles.length + " rayons"; }
+function openExportSheet(){
+  var text = backupText(), d = dkey(new Date());
+  var file = null;
+  try { file = new File([text], "courses-sauvegarde-" + d + ".json", {type:"application/json"}); } catch (e) {}
+  var canFile = !!(file && navigator.canShare && navigator.canShare({files:[file]}));
+  openSheet('<h2 tabindex="-1" autofocus>Exporter une sauvegarde</h2>'
+    + '<p class="hint">Tout le contenu de l\'app : ' + esc(countsText(state)) + ", ta liste et ton planning. Garde-la dans Fichiers ou Notes, ou envoie-la-toi, puis utilise « Restaurer une sauvegarde ».</p>"
+    + '<textarea id="bk-text" rows="4" readonly hidden aria-label="Texte de la sauvegarde"></textarea>'
+    + '<div class="sheet-actions"><button class="btn" type="button" id="bk-copy">Copier la sauvegarde</button>'
+    + (navigator.share ? '<button class="btn" type="button" id="bk-share">' + (canFile ? "Enregistrer ou partager le fichier…" : "Partager…") + "</button>" : "")
+    + '<button class="btn ghost" type="button" data-close>Fermer</button></div>',
+  function(root){
+    var ta = root.querySelector("#bk-text"); ta.value = text;
+    function manual(){ ta.hidden = false; ta.focus(); ta.select(); toast("Sélectionne le texte et copie-le."); }
+    var copy = root.querySelector("#bk-copy");
+    copy.onclick = function(){
+      if (!navigator.clipboard || !navigator.clipboard.writeText) { manual(); return; }
+      navigator.clipboard.writeText(text).then(function(){ copy.textContent = "Sauvegarde copiée"; haptic(); toast("Sauvegarde copiée."); }, manual);
+    };
+    var sh = root.querySelector("#bk-share");
+    if (sh) sh.onclick = function(){
+      navigator.share(canFile ? {files:[file], title:"Sauvegarde Courses"} : {title:"Sauvegarde Courses", text:text}).catch(function(){});
+    };
+  });
+}
+function openRestoreSheet(){
+  openSheet('<h2 tabindex="-1" autofocus>Restaurer une sauvegarde</h2>'
+    + '<p class="hint">Colle une sauvegarde ou choisis son fichier. Elle remplacera tout le contenu actuel de l\'app.</p>'
+    + '<div class="chips" style="margin:4px 0 10px"><button class="btn small" type="button" id="rs-paste">Coller</button><button class="btn small" type="button" id="rs-file">Choisir un fichier</button></div>'
+    + '<input type="file" id="rs-input" accept=".json,.txt,application/json,text/plain" hidden>'
+    + '<textarea id="rs-text" rows="5" placeholder="Ou colle ici le texte de la sauvegarde" aria-label="Texte de la sauvegarde"></textarea>'
+    + '<p class="hint" id="rs-status" role="status"></p>'
+    + '<div class="sheet-actions"><button class="btn ghost" type="button" data-close>Annuler</button><button class="btn primary" type="button" id="rs-ok">Restaurer</button></div>',
+  function(root){
+    var ta = root.querySelector("#rs-text"), st = root.querySelector("#rs-status"), fi = root.querySelector("#rs-input"), parsed = null;
+    function check(){
+      var has = !!ta.value.trim();
+      parsed = has ? parseBackup(ta.value) : null;
+      st.textContent = !has ? "" : parsed ? "Sauvegarde valide : " + countsText(parsed) + "." : "Ce texte n'est pas une sauvegarde valide.";
+      st.style.color = has && !parsed ? "var(--red)" : "";
+    }
+    ta.oninput = check;
+    root.querySelector("#rs-paste").onclick = function(){
+      if (!navigator.clipboard || !navigator.clipboard.readText) { ta.focus(); return; }
+      navigator.clipboard.readText().then(function(t){ ta.value = t; check(); }, function(){ ta.focus(); });
+    };
+    root.querySelector("#rs-file").onclick = function(){ fi.click(); };
+    fi.onchange = function(){ var f = fi.files && fi.files[0]; if (f) f.text().then(function(t){ ta.value = t; check(); }); };
+    root.querySelector("#rs-ok").onclick = function(){
+      check();
+      if (!parsed) { st.textContent = ta.value.trim() ? "Ce texte n'est pas une sauvegarde valide." : "Colle d'abord une sauvegarde."; st.style.color = "var(--red)"; return; }
+      try { localStorage.setItem(LS_KEY + ":avant-restauration", JSON.stringify(state)); } catch (e) {}
+      state = parsed;
+      bought.clear();
+      prunePlan();
+      closeSheet(); commit();
+      toast("Sauvegarde restaurée : " + countsText(state) + ".");
+    };
+  });
+}
+
 /* ---------- Haptics: on iOS 18+, toggling a native switch through its label gives a light tap ---------- */
 var hapticEl = null;
 function haptic(){
@@ -1825,6 +1901,8 @@ document.addEventListener("click", function(e){
       if (allExpanded()) ui.expanded = {}; else state.aisles.forEach(function(a){ ui.expanded[a.id] = true; });
       savePrefs(); renderCatalog(); renderNav(); break;
     case "new-aisle": openAisleSheet(null); break;
+    case "backup": openExportSheet(); break;
+    case "restore": openRestoreSheet(); break;
     case "cat-create": openItemSheet({name:cap($("#cq").value.trim())}); break;
     case "import": openImportSheet(); break;
     case "goto-meals": setTab("meals"); break;
