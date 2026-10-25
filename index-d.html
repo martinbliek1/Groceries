@@ -129,29 +129,28 @@ main{max-width:600px;margin:0 auto;padding:calc(44px + env(safe-area-inset-top,0
 .row-btn.danger{color:var(--red)}
 .val{margin-left:auto;padding-left:12px;color:var(--label2)}
 
-/* Planning */
-.day{margin-top:26px}
-.day-h{display:flex;align-items:baseline;gap:8px;margin:0 32px 7px 16px}
-.day-h h2{margin:0;font-size:20px;line-height:25px;font-weight:700}
-.day.today .day-h h2{color:var(--blue)}
-.day-d{font-size:15px;color:var(--label2)}
-.day-h .txtbtn{margin-left:auto;color:var(--label2);font-size:13px}
-.slot{min-height:52px}
-.slot .slot-k{flex:none;width:52px;font-size:15px;color:var(--label2)}
-.slot-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:10px 0}
-.slot-v{overflow-wrap:anywhere}
-.slot.unset .slot-v{color:var(--label3)}
-.slot.left .slot-v{color:var(--label2)}
-.slot-n{font-size:13px;color:var(--label2);margin-top:2px}
-.slot.left .slot-n{color:var(--blue)}
-.chev{flex:none;margin-left:8px}
-.chev svg{width:10px;height:14px;fill:none;stroke:var(--label3);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.slot select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;cursor:pointer}
-.slot.off{padding:0}
-.slot.off button{display:flex;align-items:center;width:100%;min-height:44px;padding:0 16px;text-align:left}
-.slot.off .slot-v{color:var(--label3)}
-.slot.off .plus{margin-left:auto;color:var(--blue);font-size:20px;line-height:1}
-
+/* Planning: strict grid, Matin/Midi/Soir rows aligned across every day */
+.plan{display:flex;margin-top:12px}
+.gutter{flex:none;width:60px;padding-left:16px;display:flex;flex-direction:column;gap:8px}
+.g-h{height:48px}
+.g-k{height:96px;display:flex;align-items:center;font-size:13px;font-weight:500;color:var(--label2)}
+.days{flex:1;min-width:0;display:grid;grid-auto-flow:column;grid-auto-columns:46%;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-right:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.days::-webkit-scrollbar{display:none}
+.day{scroll-snap-align:start;display:flex;flex-direction:column;gap:8px;min-width:0}
+.day-h{height:48px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 4px 4px}
+.day-h b{font-size:17px;font-weight:600;line-height:1.2}
+.day-h small{font-size:13px;color:var(--label2)}
+.day.today .day-h b,.day.today .day-h small{color:var(--blue)}
+.cell{position:relative;height:96px;width:100%;border-radius:14px;background:var(--card);padding:10px 12px;display:flex;flex-direction:column;overflow:hidden;text-align:left}
+.cell-v{font-size:15px;font-weight:600;line-height:1.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cell-n{margin-top:auto;padding-top:2px;font-size:12px;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell.left .cell-v{color:var(--label2);font-weight:500}
+.cell.left .cell-n{color:var(--blue)}
+.cell.unset{align-items:center;justify-content:center}
+.cell.unset svg{width:22px;height:22px;fill:none;stroke:var(--label3);stroke-width:2;stroke-linecap:round}
+.cell.off{background:var(--fill);align-items:center;justify-content:center;font-size:13px;color:var(--label2)}
+.cell select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;cursor:pointer}
+.cell:active{opacity:.7}
 /* Rayons */
 .group .aisle-row,.group .add-row{--inset:50px}
 .aisle-row input{flex:1;min-width:0;border:0;background:none;padding:11px 0;outline:none}
@@ -272,8 +271,8 @@ body.has-ai .ai-box{display:flex}
 
   <section id="view-plan" aria-label="Planning" hidden>
     <div class="lt-row"><h1 class="lt">Planning</h1></div>
+    <div class="plan"><div class="gutter" aria-hidden="true"><div class="g-h"></div><div class="g-k">Matin</div><div class="g-k">Midi</div><div class="g-k">Soir</div></div><div class="days" id="days"></div></div>
     <div id="pending" hidden></div>
-    <div id="days"></div>
     <h3 class="gh">Réglages</h3>
     <ul class="group">
       <li class="row sw-row"><label><span class="name">Lier à la liste de courses</span><input type="checkbox" class="sw" switch id="set-link"></label></li>
@@ -980,14 +979,17 @@ function renderPlan(){
   var el = $("#days"); if (!el) return;
   var ae = document.activeElement;
   if (ae && ae.tagName === "SELECT" && ae.closest && ae.closest("#days")) return;
-  var t = todayDate(), html = "";
+  var keep = el.scrollLeft, t = todayDate(), html = "";
   var meals = state.meals.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "fr", {sensitivity:"base"}); });
   function slotRow(d, slot){
-    var key = slotKey(d, slot), v = state.plan[key], m = v ? mealById(v.m) : null, cls = "row slot", main, sub = "";
+    var key = slotKey(d, slot), v = state.plan[key], m = v ? mealById(v.m) : null, cls = "cell", body, sub = "";
     var label = slot === "matin" ? "Matin" : slot === "midi" ? "Midi" : "Soir";
-    if (!m) { cls += " unset"; main = "Choisir un repas"; }
-    else if (v.left) { cls += " left"; main = m.name; sub = "Reste de " + slotLabel(v.left); }
-    else { main = m.name; if (m.serves !== 1) sub = v.one ? "Pour 1 repas cette fois" : "Pour 2 repas"; }
+    if (!m) { cls += " unset"; body = ICON.navPlus; }
+    else {
+      if (v.left) { cls += " left"; sub = "Reste de " + slotLabel(v.left); }
+      else if (m.serves !== 1) sub = v.one ? "Pour 1 repas" : "Pour 2 repas";
+      body = '<span class="cell-v">' + esc(m.name) + "</span>" + (sub ? '<span class="cell-n">' + esc(sub) + "</span>" : "");
+    }
     var closable = slot === "matin" || (slot === "midi" && !isWeekend(d));
     var opts = '<option value=""' + (m ? "" : " selected") + ">Pas prévu</option>"
       + (closable ? '<option value="__close">' + (slot === "matin" ? "Pas besoin (petit-déj)" : "Pas besoin (au travail)") + "</option>" : "")
@@ -998,27 +1000,21 @@ function renderPlan(){
         })()
       + '<optgroup label="Repas">' + meals.map(function(x){ return '<option value="' + esc(x.id) + '"' + (m && !v.left && x.id === m.id ? " selected" : "") + ">" + esc(x.name) + "</option>"; }).join("") + "</optgroup>";
     var aria = label + ", " + d.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"});
-    return '<li class="' + cls + '"><span class="slot-k">' + label + '</span><span class="slot-main"><span class="slot-v">' + esc(main) + "</span>"
-      + (sub ? '<span class="slot-n">' + esc(sub) + "</span>" : "") + '</span><span class="chev">' + ICON.updown + "</span>"
-      + '<select data-plan="' + key + '" aria-label="' + esc(aria) + '">' + opts + "</select></li>";
+    return '<div class="' + cls + '">' + body + '<select data-plan="' + key + '" aria-label="' + esc(aria) + '">' + opts + "</select></div>";
   }
-  function offRow(d, slot, label, text){
-    var key = slotKey(d, slot);
-    return '<li class="row slot off"><button type="button" data-act="open-slot" data-key="' + key + '" aria-label="' + label + ", " + text + '. Rendre disponible">'
-      + '<span class="slot-k">' + label + '</span><span class="slot-v">' + text + '</span><span class="plus" aria-hidden="true">+</span></button></li>';
+  function offCell(d, slot, label, text){
+    return '<button type="button" class="cell off" data-act="open-slot" data-key="' + slotKey(d, slot) + '" aria-label="' + label + ", " + text + '. Rendre disponible">' + text + "</button>";
   }
   for (var n = 0; n < 7; n++) {
     var d = addDays(t, n), title = n === 0 ? "Aujourd'hui" : n === 1 ? "Demain" : cap(d.toLocaleDateString("fr-FR", {weekday:"long"}));
-    var sub = d.toLocaleDateString("fr-FR", n < 2 ? {weekday:"long", day:"numeric", month:"long"} : {day:"numeric", month:"long"});
-    var matinOpen = editableSlot(d, "matin");
-    html += '<section class="day' + (n === 0 ? " today" : "") + '"><div class="day-h"><h2>' + esc(title) + '</h2><span class="day-d">' + esc(sub) + "</span>"
-      + (matinOpen ? "" : '<button type="button" class="txtbtn" data-act="open-slot" data-key="' + slotKey(d, "matin") + '">+ Matin</button>') + "</div>"
-      + '<ul class="group">'
-      + (matinOpen ? slotRow(d, "matin") : "")
-      + (editableSlot(d, "midi") ? slotRow(d, "midi") : offRow(d, "midi", "Midi", "Au travail"))
-      + slotRow(d, "soir") + "</ul></section>";
+    var sub = d.toLocaleDateString("fr-FR", {day:"numeric", month:"short"});
+    html += '<section class="day' + (n === 0 ? " today" : "") + '"><div class="day-h"><b>' + esc(title) + "</b><small>" + esc(sub) + "</small></div>"
+      + (editableSlot(d, "matin") ? slotRow(d, "matin") : offCell(d, "matin", "Matin", "Petit-déj"))
+      + (editableSlot(d, "midi") ? slotRow(d, "midi") : offCell(d, "midi", "Midi", "Au travail"))
+      + slotRow(d, "soir") + "</section>";
   }
   el.innerHTML = html;
+  el.scrollLeft = keep;
   $("#set-link").checked = state.settings.linkPlan;
   $("#set-auto").checked = state.settings.autoLeft;
   var pend = pendingPortions(), pe = $("#pending");
