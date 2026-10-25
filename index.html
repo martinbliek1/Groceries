@@ -37,7 +37,7 @@
 html{font-size:17px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 @supports (font: -apple-system-body){html{font:-apple-system-body}}
 body{margin:0;background:var(--bg);color:var(--label);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Segoe UI",Roboto,sans-serif;font-size:1rem;line-height:1.29;letter-spacing:-.01em}
-body[data-tab="list"]{background:var(--bg-plain)}
+body[data-tab="list"],body[data-tab="aisles"]{background:var(--bg-plain)}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;letter-spacing:inherit}
 input,select,textarea{font:inherit;letter-spacing:inherit;color:var(--label)}
 svg{display:block}
@@ -65,12 +65,6 @@ main{max-width:600px;margin:0 auto;padding:calc(44px + env(safe-area-inset-top,0
 .lt-row{display:flex;align-items:center;gap:10px;padding:2px 16px 0}
 .lt{margin:0;font-size:2rem;line-height:1.2;font-weight:700;letter-spacing:.01em}
 .lt-sub{margin:2px 16px 0;color:var(--label2);font-size:0.882rem}
-
-/* Segmented control */
-.seg{display:flex;margin:14px 16px 0;padding:2px;border-radius:9px;background:var(--fill)}
-.seg button{flex:1;height:28px;border-radius:7px;font-size:0.765rem;font-weight:500}
-.seg button[aria-pressed="true"]{background:var(--card);font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
-@media (prefers-color-scheme: dark){.seg button[aria-pressed="true"]{background:#636366}}
 
 /* Search / quick add */
 .search{position:relative;margin:12px 16px 0}
@@ -170,33 +164,51 @@ main{max-width:600px;margin:0 auto;padding:calc(44px + env(safe-area-inset-top,0
 .cell.off{background:var(--fill);align-items:center;justify-content:center;font-size:0.765rem;color:var(--label2)}
 .cell select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;cursor:pointer}
 .cell:active{opacity:.7}
-/* Rayons */
-.group .aisle-row,.group .add-row{--inset:50px}
-.aisle-row input{flex:1;min-width:0;border:0;background:none;padding:11px 0;outline:none}
-.minus{flex:none;width:22px;height:22px;margin-right:12px;border-radius:50%;background:var(--red);display:inline-flex;align-items:center;justify-content:center}
-.minus::after{content:"";width:10px;height:2px;border-radius:1px;background:#fff}
-.minus[disabled]{opacity:.3}
-.grip{flex:none;width:44px;height:44px;margin-right:-10px;display:inline-flex;align-items:center;justify-content:center;color:var(--label3);touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab}
-.grip svg{width:20px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
-.vh{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-#aisle-list .row{background:var(--card)}
-#aisle-list.reordering .row{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
-#aisle-list .row.dragging{transition:none;z-index:5;scale:1.02;box-shadow:0 10px 28px rgba(0,0,0,.2);cursor:grabbing}
-#aisle-list .row.dragging::before,#aisle-list .row.dragging + .row::before{opacity:0}
-#route .row,#aisle-list .row:not(.aisle-row){-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* Rayons: the catalogue grouped in collapsible aisles */
+#catalog{margin-top:10px}
+.csec{margin-top:0;border-radius:0}
+.csec-h{position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:0 16px;text-align:left}
+.csec + .csec .csec-h::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.csec-n{flex:1;min-width:0;font-size:1.176rem;line-height:1.25;font-weight:700;color:var(--blue)}
+.csec-c{color:var(--label2);font-size:0.882rem;font-variant-numeric:tabular-nums}
+.csec-c b{color:var(--blue);font-weight:600}
+.csec-h svg{flex:none;width:13px;height:13px;fill:none;stroke:var(--label3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.csec.open .csec-h svg{transform:rotate(90deg)}
+.csec.open{padding-bottom:8px}
+.csec-empty{margin:0 16px 6px;color:var(--label3);font-size:0.882rem}
+.cat-actions{display:flex;flex-direction:column;padding:14px 16px 0}
+#catalog.reorder .plain,#catalog.reorder .csec-empty{display:none}
+#catalog.reorder .csec{padding-bottom:0;background:var(--bg-plain)}
+#catalog.reordering .csec{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+#catalog .csec.dragging{transition:none;position:relative;z-index:5;scale:1.02;border-radius:12px;background:var(--card);box-shadow:0 10px 28px rgba(0,0,0,.2)}
+#catalog .csec.dragging .csec-h::before,#catalog .csec.dragging + .csec .csec-h::before{opacity:0}
+#route .row,#catalog .row,#catalog .csec-h{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .row.item.lifted .sw-fg{opacity:.35}
-.row.item.ghost{position:fixed;z-index:40;margin:0;pointer-events:none;border-radius:12px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.25);transform-origin:center;list-style:none}
-.row.item.ghost .sw-fg{background:var(--card)}
-.row.item.ghost .sw-l,.row.item.ghost .sw-r{display:none}
+.row.item.leaving{opacity:.35;transition:opacity .4s}
 .lsec{border-radius:14px;transition:background-color .15s}
 .lsec.drop{background:color-mix(in srgb,var(--blue) 14%,transparent);outline:2px solid var(--blue);outline-offset:-2px}
 .lsec.drop .sw-fg{background:transparent}
-.mv{flex:none;width:36px;height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--label3)}
-.mv svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.mv[disabled]{opacity:.35}
-.add-row input{flex:1;min-width:0;border:0;background:none;padding:11px 0;outline:none}
-.plus-g{flex:none;width:22px;height:22px;margin-right:12px;border-radius:50%;background:var(--green);display:inline-flex;align-items:center;justify-content:center}
-.plus-g svg{width:12px;height:12px;stroke:#fff;stroke-width:2.6;stroke-linecap:round}
+
+/* Haptic Touch: lifted row, blurred backdrop, context menu */
+.lift{position:fixed;z-index:52;margin:0;list-style:none;pointer-events:none;border-radius:14px;overflow:hidden;background:var(--card);box-shadow:0 14px 36px rgba(0,0,0,.22)}
+.lift .sw-fg{background:var(--card)}
+.lift .sw-l,.lift .sw-r{display:none}
+.lift.ghost{z-index:40;transform-origin:center}
+.cm-src{opacity:0}
+.cm-pv{transition:transform .28s cubic-bezier(.2,.9,.25,1.15),opacity .18s}
+.cm-pv.in{transform:scale(1.03)}
+.cm-ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.12);-webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);opacity:0;transition:opacity .22s}
+.cm-ov.in{opacity:1}
+.cm{position:fixed;z-index:53;width:250px;border-radius:14px;overflow:hidden;background:var(--glass-strong);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:var(--shadow),inset 0 0 0 .5px var(--rim);opacity:0;transform:scale(.85);transition:opacity .18s,transform .3s cubic-bezier(.2,.9,.25,1.15)}
+.cm.in{opacity:1;transform:none}
+.cm.out,.cm-ov.out,.cm-pv.out{opacity:0;transition:opacity .18s}
+.cm-i{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:11px 16px;text-align:left;font-size:1rem}
+.cm-i + .cm-i::before{content:"";position:absolute;top:0;left:0;right:0;height:.5px;background:var(--sep)}
+.cm-i svg{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.cm-i.danger{color:var(--red)}
+.cm-i[disabled]{opacity:.35}
+.cm-i:active{background:var(--fill)}
+@media (prefers-color-scheme: dark){.cm-ov{background:rgba(0,0,0,.35)}}
 
 /* Switches: native on iOS 17.4+, drawn elsewhere */
 .sw-row label{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:6px 0}
@@ -280,16 +292,11 @@ body.has-ai .ai-box{display:flex}
 </head>
 <body data-tab="list">
 <header class="navbar" id="navbar">
-  <div class="nb-in"><div></div><div class="nb-title" id="nb-title">Courses</div><div class="nb-r" id="nb-right"></div></div>
+  <div class="nb-in"><div></div><div class="nb-title" id="nb-title">Liste</div><div class="nb-r" id="nb-right"></div></div>
 </header>
 <main>
   <section id="view-list" aria-label="Liste de courses">
-    <div class="lt-row"><h1 class="lt">Courses</h1></div>
-    <p class="lt-sub" id="summary" aria-live="polite"></p>
-    <div class="seg" role="group" aria-label="Affichage de la liste">
-      <button type="button" data-act="mode" data-mode="route" aria-pressed="true">À acheter</button>
-      <button type="button" data-act="mode" data-mode="all" aria-pressed="false">Catalogue</button>
-    </div>
+    <div class="lt-row"><h1 class="lt">Liste</h1></div>
     <div class="search">
       <div class="search-f">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
@@ -300,7 +307,36 @@ body.has-ai .ai-box{display:flex}
     <div class="done-bar" id="done-bar" hidden></div>
     <div id="route"></div>
     <div class="empty" id="list-empty" hidden></div>
-    <div class="foot" id="list-foot"></div>
+  </section>
+
+
+  <section id="view-aisles" aria-label="Rayons" hidden>
+    <div class="lt-row"><h1 class="lt">Rayons</h1><div class="lt-act"></div></div>
+    <div class="search">
+      <div class="search-f">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+        <input type="search" id="cq" placeholder="Rechercher un produit" autocomplete="off" autocorrect="off" enterkeyhint="search" aria-label="Rechercher dans les rayons">
+      </div>
+    </div>
+    <div id="catalog"></div>
+    <div class="cat-actions">
+      <button type="button" class="row-btn" data-act="new-aisle">Nouveau rayon</button>
+      <button type="button" class="row-btn" data-act="import">Importer une liste</button>
+    </div>
+    <p class="gf">Les rayons suivent l'ordre de ton magasin, et ta liste suit ce trajet. Maintiens un rayon ou un produit appuyé pour le modifier, ou glisse-le pour le déplacer.</p>
+    <p class="gf" id="sync"></p>
+  </section>
+
+  <section id="view-meals" aria-label="Repas" hidden>
+    <div class="lt-row"><h1 class="lt">Repas</h1><div class="lt-act"></div></div>
+    <p class="lt-sub" id="week-label"></p>
+    <div id="meal-list"></div>
+    <ul class="group" style="margin-top:22px">
+      <li class="row"><button type="button" class="row-btn" data-act="new-meal">Nouveau repas</button></li>
+      <li class="row ai"><button type="button" class="row-btn" data-act="ideas">Des idées de repas</button></li>
+      <li class="row" id="new-week"><button type="button" class="row-btn danger" data-act="new-week">Retirer les repas sans jour</button></li>
+    </ul>
+    <p class="gf">Touche un repas pour l'ajouter cette semaine : ses ingrédients vont sur ta liste. Pour un jour précis, passe par le Planning.</p>
   </section>
 
   <section id="view-plan" aria-label="Planning" hidden>
@@ -317,44 +353,21 @@ body.has-ai .ai-box{display:flex}
       <li class="row"><button type="button" class="row-btn danger" data-act="clear-plan">Vider le planning</button></li>
     </ul>
   </section>
-
-  <section id="view-meals" aria-label="Repas" hidden>
-    <div class="lt-row"><h1 class="lt">Repas</h1><div class="lt-act"></div></div>
-    <p class="lt-sub" id="week-label"></p>
-    <div id="meal-list"></div>
-    <ul class="group" style="margin-top:22px">
-      <li class="row"><button type="button" class="row-btn" data-act="new-meal">Nouveau repas</button></li>
-      <li class="row ai"><button type="button" class="row-btn" data-act="ideas">Des idées de repas</button></li>
-      <li class="row" id="new-week"><button type="button" class="row-btn danger" data-act="new-week">Retirer les repas sans jour</button></li>
-    </ul>
-    <p class="gf">Touche un repas pour l'ajouter cette semaine : ses ingrédients vont sur ta liste. Pour un jour précis, passe par le Planning.</p>
-  </section>
-
-  <section id="view-aisles" aria-label="Rayons" hidden>
-    <div class="lt-row"><h1 class="lt">Rayons</h1><div class="lt-act"></div></div>
-    <h3 class="gh">Ordre du magasin</h3>
-    <ul class="group" id="aisle-list"></ul>
-    <ul class="group" id="aisle-add" style="margin-top:22px" hidden>
-      <li class="row add-row"><span class="plus-g" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M6 2v8M2 6h8"/></svg></span><input type="text" id="new-aisle" placeholder="Nouveau rayon" autocomplete="off" enterkeyhint="done" aria-label="Nom du nouveau rayon"><button type="button" class="nb-btn strong" data-act="add-aisle">Ajouter</button></li>
-    </ul>
-    <p class="gf">Range les rayons dans l'ordre où tu les traverses : ta liste suit ce trajet. Maintiens un rayon appuyé pour le déplacer, ou touche Modifier pour les renommer ou les supprimer.</p>
-    <p class="gf" id="sync"></p>
-  </section>
 </main>
 
 <nav class="tabbar" aria-label="Sections" role="tablist">
   <button type="button" role="tab" data-act="tab" data-tab="list" aria-selected="true">
     <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3.5 5h2.6l2.4 11.4a1.6 1.6 0 0 0 1.6 1.3h9.6a1.6 1.6 0 0 0 1.6-1.2L23.6 9H7"/><circle cx="10.5" cy="22" r="1.6"/><circle cx="19.5" cy="22" r="1.6"/></svg>
     Liste<span class="badge" id="badge-list" hidden></span></button>
-  <button type="button" role="tab" data-act="tab" data-tab="plan" aria-selected="false">
-    <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="4" y="6" width="20" height="18" rx="3.5"/><path d="M4 11.5h20M9.5 3.5v4M18.5 3.5v4"/></svg>
-    Planning</button>
-  <button type="button" role="tab" data-act="tab" data-tab="meals" aria-selected="false">
-    <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M8 4v7a2.5 2.5 0 0 0 2.5 2.5V24M13 4v7a2.5 2.5 0 0 1-2.5 2.5M10.5 4v6M20.5 24V4c-2.6 1.5-3.6 4.2-3.6 7.6V15h3.6"/></svg>
-    Repas<span class="badge" id="badge-meals" hidden></span></button>
   <button type="button" role="tab" data-act="tab" data-tab="aisles" aria-selected="false">
     <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M10.5 4.5 4 7v16.5l6.5-2.5 7 2.5 6.5-2.5V4.5L17.5 7l-7-2.5zM10.5 4.5V21M17.5 7v16.5"/></svg>
     Rayons</button>
+  <button type="button" role="tab" data-act="tab" data-tab="meals" aria-selected="false">
+    <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M8 4v7a2.5 2.5 0 0 0 2.5 2.5V24M13 4v7a2.5 2.5 0 0 1-2.5 2.5M10.5 4v6M20.5 24V4c-2.6 1.5-3.6 4.2-3.6 7.6V15h3.6"/></svg>
+    Repas<span class="badge" id="badge-meals" hidden></span></button>
+  <button type="button" role="tab" data-act="tab" data-tab="plan" aria-selected="false">
+    <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="4" y="6" width="20" height="18" rx="3.5"/><path d="M4 11.5h20M9.5 3.5v4M18.5 3.5v4"/></svg>
+    Planning</button>
 </nav>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -515,7 +528,17 @@ function applyCatalogPatch(s){
 
 var state = sanitize(loadLocal() || SEED || blank());
 var bought = new Set();
-var ui = {tab:"list", mode:"route", editAisles:false};
+var ui = {tab:"list", showBought:true, expanded:{}};
+/* View preferences and bought items live under their own keys, outside the list data. */
+var PREFS_KEY = "courses-trajet:prefs", BOUGHT_KEY = "courses-trajet:bought";
+try {
+  var savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
+  ui.showBought = savedPrefs.showBought !== false;
+  if (savedPrefs.expanded && typeof savedPrefs.expanded === "object") ui.expanded = savedPrefs.expanded;
+  (JSON.parse(localStorage.getItem(BOUGHT_KEY)) || []).forEach(function(id){ if (itemById(id) && !isNeeded(id)) bought.add(id); });
+} catch (e) {}
+function savePrefs(){ try { localStorage.setItem(PREFS_KEY, JSON.stringify({showBought:ui.showBought, expanded:ui.expanded})); } catch (e) {} }
+function saveBought(){ try { localStorage.setItem(BOUGHT_KEY, JSON.stringify(Array.from(bought))); } catch (e) {} }
 var ICON = {
   check:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3 5 8.8 9.6 3.4"/></svg>',
   info:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2"/><circle cx="12" cy="7.9" r=".7" fill="currentColor"/></svg>',
@@ -526,7 +549,12 @@ var ICON = {
   up:'<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4"/></svg>',
   down:'<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4"/></svg>',
   navPlus:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
-  grip:'<svg viewBox="0 0 20 14" aria-hidden="true"><path d="M2 2h16M2 7h16M2 12h16"/></svg>',
+  chev:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.2 2.2 8 6l-3.8 3.8"/></svg>',
+  pencil:'<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13.5 3.5l3 3L7 16H4v-3z"/></svg>',
+  trash:'<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5h12M8 5.5V3.8h4v1.7M5.5 5.5l.8 11h7.4l.8-11"/></svg>',
+  checkC:'<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M6.8 10.2l2.2 2.2 4.2-4.6"/></svg>',
+  plusC:'<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M10 6.5v7M6.5 10h7"/></svg>',
+  minusC:'<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M6.5 10h7"/></svg>',
   cart:'<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3.5 5h2.6l2.4 11.4a1.6 1.6 0 0 0 1.6 1.3h9.6a1.6 1.6 0 0 0 1.6-1.2L23.6 9H7"/><circle cx="10.5" cy="22" r="1.6"/><circle cx="19.5" cy="22" r="1.6"/></svg>',
   fork:'<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M8 4v7a2.5 2.5 0 0 0 2.5 2.5V24M13 4v7a2.5 2.5 0 0 1-2.5 2.5M10.5 4v6M20.5 24V4c-2.6 1.5-3.6 4.2-3.6 7.6V15h3.6"/></svg>'
 };
@@ -638,7 +666,7 @@ var PLACARD_RULE = 'Mets "placard": true pour ce qu\'on garde normalement en sto
 /* ---------- Actions ---------- */
 function toggleItem(id){
   if (!itemById(id)) return;
-  if (isNeeded(id)) { delete state.need[id]; delete state.qty[id]; delete state.qtySpec[id]; if (ui.mode === "route") bought.add(id); }
+  if (isNeeded(id)) { delete state.need[id]; delete state.qty[id]; delete state.qtySpec[id]; if (ui.tab === "list") bought.add(id); }
   else { addSource(id, "m"); bought.delete(id); }
   commit();
 }
@@ -892,14 +920,6 @@ function pickItem(id){
   toast(was ? it.name + " est déjà sur la liste." : it.name + " ajouté à la liste.");
   var inp = $("#qa"); inp.value = ""; hideSugg(); inp.focus();
 }
-function moveAisle(id, d){
-  var i = state.aisles.findIndex(function(a){ return a.id === id; }), j = i + d;
-  if (i < 0 || j < 0 || j >= state.aisles.length) return;
-  var t = state.aisles[i]; state.aisles[i] = state.aisles[j]; state.aisles[j] = t;
-  commit();
-  var b = document.querySelector('[data-act="aisle-' + (d < 0 ? "up" : "down") + '"][data-id="' + id + '"]');
-  if (b && !b.disabled) b.focus();
-}
 function deleteAisle(id){
   if (id === DIVERS) return;
   var a = aisleById(id); if (!a) return;
@@ -909,22 +929,44 @@ function deleteAisle(id){
   commit();
   toast(a.name + " supprimé." + (moved ? " " + moved + " " + plural(moved, "produit déplacé", "produits déplacés") + " dans Divers." : ""));
 }
-function addAisle(){
-  var inp = $("#new-aisle"), name = cap(inp.value.trim()); if (!name) return;
-  if (state.aisles.some(function(a){ return norm(a.name) === norm(name); })) { toast("Ce rayon existe déjà."); return; }
-  var a = {id:uid("a"), name:name};
-  var last = state.aisles.length - 1;
-  if (last >= 0 && state.aisles[last].id === DIVERS) state.aisles.splice(last, 0, a); else state.aisles.push(a);
-  inp.value = ""; commit(); toast(name + " ajouté. Déplace-le avec les flèches.");
+function openAisleSheet(id){
+  var a = id ? aisleById(id) : null;
+  if (id && !a) return;
+  openSheet('<h2 tabindex="-1" autofocus>' + (a ? "Renommer le rayon" : "Nouveau rayon") + "</h2>"
+    + '<label class="field"><span>Nom</span><input type="text" id="as-name" value="' + esc(a ? a.name : "") + '" autocomplete="off" enterkeyhint="done"></label>'
+    + '<p class="err" id="as-err" role="alert"></p>'
+    + '<div class="sheet-actions"><button class="btn ghost" type="button" data-close>Annuler</button><button class="btn primary" type="button" id="as-save">' + (a ? "OK" : "Ajouter") + "</button></div>",
+  function(root){
+    var inp = root.querySelector("#as-name"), err = root.querySelector("#as-err");
+    function save(){
+      var name = cap(inp.value.trim());
+      if (!name) { err.textContent = "Donne un nom au rayon."; return; }
+      if (state.aisles.some(function(x){ return norm(x.name) === norm(name) && (!a || x.id !== a.id); })) { err.textContent = "Ce rayon existe déjà."; return; }
+      if (a) { a.name = name; closeSheet(); commit(); toast("Rayon renommé."); return; }
+      var n = {id:uid("a"), name:name}, last = state.aisles.length - 1;
+      if (last >= 0 && state.aisles[last].id === DIVERS) state.aisles.splice(last, 0, n); else state.aisles.push(n);
+      ui.expanded[n.id] = true; savePrefs();
+      closeSheet(); commit(); toast(name + " ajouté. Maintiens-le appuyé pour le déplacer.");
+    }
+    root.querySelector("#as-save").onclick = save;
+    inp.onkeydown = function(e){ if (e.key === "Enter") { e.preventDefault(); save(); } };
+    setTimeout(function(){ inp.focus(); }, 50);
+  });
+}
+function confirmDeleteAisle(id){
+  var a = aisleById(id); if (!a || id === DIVERS) return;
+  var n = state.items.filter(function(i){ return i.aisle === id; }).length;
+  openSheet('<h2 tabindex="-1" autofocus>Supprimer « ' + esc(a.name) + " » ?</h2>"
+    + '<p class="hint">' + (n ? "Ses " + n + " " + plural(n, "produit ira", "produits iront") + " dans Divers." : "Ce rayon est vide.") + "</p>"
+    + '<div class="sheet-actions"><button class="btn danger" type="button" id="ad-ok">Supprimer le rayon</button><button class="btn ghost" type="button" data-close>Annuler</button></div>',
+  function(root){ root.querySelector("#ad-ok").onclick = function(){ closeSheet(); deleteAisle(id); }; });
 }
 
 /* ---------- Rendering ---------- */
-function render(){ renderSummary(); renderList(); renderPlan(); renderMeals(); renderAisles(); renderDatalist(); }
+function render(){ renderSummary(); renderList(); renderPlan(); renderMeals(); renderCatalog(); renderDatalist(); }
 
 function renderSummary(){
   var n = state.items.filter(function(i){ return isNeeded(i.id); }).length, p = Object.keys(plannedSet()).length;
-  $("#summary").textContent = (n ? n + " " + plural(n, "produit", "produits") + " à acheter" : "Rien à acheter")
-    + (p ? " · " + p + " repas " + plural(p, "prévu", "prévus") : "");
   var bl = $("#badge-list"); bl.textContent = n || ""; bl.hidden = !n;
   var bm = $("#badge-meals"); bm.textContent = p || ""; bm.hidden = !p;
 }
@@ -958,36 +1000,33 @@ function itemRow(i, route){
 }
 
 function renderList(){
-  document.querySelectorAll('[data-act="mode"]').forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.mode === ui.mode)); });
-  var route = ui.mode === "route", html = "", shown = 0;
+  var html = "", shown = 0, hide = !ui.showBought;
   openRow = null;
+  var k = Array.from(bought).filter(function(id){ return itemById(id) && !isNeeded(id); }).length;
   state.aisles.forEach(function(a){
-    var its = state.items.filter(function(i){ return i.aisle === a.id; });
-    if (route) its = its.filter(function(i){ return isNeeded(i.id) || bought.has(i.id); });
+    var its = state.items.filter(function(i){ return i.aisle === a.id && (isNeeded(i.id) || (!hide && bought.has(i.id))); });
     if (!its.length) return;
     its.sort(function(x, y){ return x.name.localeCompare(y.name, "fr", {sensitivity:"base"}); });
     shown += its.length;
     var left = its.filter(function(i){ return isNeeded(i.id); }).length;
-    html += '<section class="lsec' + (route && !left ? " done" : "") + '" data-aisle="' + esc(a.id) + '"><h2 class="lsec-h">' + esc(a.name) + "</h2>"
-      + '<ul class="plain">' + its.map(function(i){ return itemRow(i, route); }).join("") + "</ul></section>";
+    html += '<section class="lsec' + (!left ? " done" : "") + '" data-aisle="' + esc(a.id) + '"><h2 class="lsec-h">' + esc(a.name) + "</h2>"
+      + '<ul class="plain">' + its.map(function(i){ return itemRow(i, true); }).join("") + "</ul></section>";
   });
-  var out = $("#route"), empty = $("#list-empty"), foot = $("#list-foot"), bar = $("#done-bar");
+  var out = $("#route"), empty = $("#list-empty"), bar = $("#done-bar");
   out.innerHTML = html;
-  if (route && !shown) {
+  if (!shown) {
     out.hidden = true; empty.hidden = false;
-    empty.innerHTML = ICON.cart + "<h2>Rien à acheter</h2><p>Choisis les repas de la semaine, ou ajoute des produits depuis le catalogue.</p>"
-      + '<button type="button" data-act="goto-meals">Choisir des repas</button><button type="button" data-act="goto-all">Ouvrir le catalogue</button>';
-  } else if (!route && !state.items.length) {
-    out.hidden = true; empty.hidden = false;
-    empty.innerHTML = ICON.cart + "<h2>Catalogue vide</h2><p>Ajoute un produit avec le champ ci-dessus, ou colle ta liste actuelle.</p>"
-      + '<button type="button" data-act="import">Importer une liste</button>';
+    empty.innerHTML = k
+      ? ICON.checkC + "<h2>Tout est acheté</h2><p>" + k + " " + plural(k, "produit acheté est masqué.", "produits achetés sont masqués.") + "</p>"
+        + '<button type="button" data-act="show-bought">Afficher</button>'
+      : ICON.cart + "<h2>Rien à acheter</h2><p>Choisis les repas de la semaine, ou ajoute des produits depuis les rayons.</p>"
+        + '<button type="button" data-act="goto-meals">Choisir des repas</button><button type="button" data-act="goto-all">Ouvrir les rayons</button>';
   } else { out.hidden = false; empty.hidden = true; empty.innerHTML = ""; }
-  var k = route ? Array.from(bought).filter(function(id){ return itemById(id) && !isNeeded(id); }).length : 0;
-  bar.hidden = !k;
-  bar.innerHTML = k ? k + " " + plural(k, "acheté", "achetés") + ' · <button type="button" data-act="clear-bought">Masquer</button>' : "";
-  foot.innerHTML = (!route && state.items.length)
-    ? "<p>Coche ce que tu dois acheter. Glisse un produit vers la gauche pour le modifier ou le supprimer, ou maintiens-le appuyé pour le déplacer dans un autre rayon.</p>" + '<button type="button" data-act="import">Importer une liste</button>'
-    : "";
+  bar.hidden = !k || !shown;
+  bar.innerHTML = k ? k + " " + plural(k, "acheté", "achetés") + (hide ? " " + plural(k, "masqué", "masqués") : "")
+    + ' · <button type="button" data-act="' + (hide ? "show-bought" : "hide-bought") + '">' + (hide ? "Afficher" : "Masquer") + "</button>"
+    + ' · <button type="button" data-act="clear-bought">Effacer</button>' : "";
+  saveBought();
 }
 
 function renderMeals(){
@@ -1066,21 +1105,29 @@ function renderPlan(){
       }).join("") + '</ul><p class="gf">Touche un créneau et choisis « Reste : … » pour placer une portion.</p>' : "";
 }
 
-function renderAisles(){
-  var ae = document.activeElement;
-  if (ae && ae.tagName === "INPUT" && ae.closest && ae.closest("#aisle-list")) return;
-  var n = state.aisles.length, edit = ui.editAisles;
-  $("#aisle-add").hidden = !edit;
-  $("#aisle-list").innerHTML = state.aisles.map(function(a, ix){
-    var count = state.items.filter(function(i){ return i.aisle === a.id; }).length;
-    if (!edit) return '<li class="row"><span class="name" style="padding:11px 0">' + esc(a.name) + '</span><span class="val">' + count + "</span></li>";
-    return '<li class="row aisle-row">'
-      + '<button type="button" class="minus" data-act="aisle-del" data-id="' + esc(a.id) + '" aria-label="Supprimer ' + esc(a.name) + '"' + (a.id === DIVERS ? " disabled" : "") + "></button>"
-      + '<input type="text" data-rename="' + esc(a.id) + '" value="' + esc(a.name) + '" aria-label="Nom du rayon, ' + count + " " + plural(count, "produit", "produits") + '">'
-      + '<button type="button" class="vh" data-act="aisle-up" data-id="' + esc(a.id) + '" aria-label="Monter ' + esc(a.name) + '"' + (ix === 0 ? " disabled" : "") + "></button>"
-      + '<button type="button" class="vh" data-act="aisle-down" data-id="' + esc(a.id) + '" aria-label="Descendre ' + esc(a.name) + '"' + (ix === n - 1 ? " disabled" : "") + "></button>"
-      + '<span class="grip" aria-hidden="true">' + ICON.grip + "</span></li>";
-  }).join("");
+function searchTerms(){ var q = norm($("#cq").value); return q ? q.split(" ").filter(Boolean) : []; }
+function renderCatalog(){
+  var out = $("#catalog"); if (!out) return;
+  var terms = searchTerms(), html = "";
+  if (openRow && out.contains(openRow)) openRow = null;
+  state.aisles.forEach(function(a){
+    var its = state.items.filter(function(i){ return i.aisle === a.id; });
+    if (terms.length) {
+      its = its.filter(function(i){ var n = norm(i.name); return terms.every(function(t){ return n.indexOf(t) >= 0; }); });
+      if (!its.length) return;
+    }
+    its.sort(function(x, y){ return x.name.localeCompare(y.name, "fr", {sensitivity:"base"}); });
+    var open = terms.length > 0 || !!ui.expanded[a.id];
+    var onList = its.filter(function(i){ return isNeeded(i.id); }).length;
+    html += '<section class="lsec csec' + (open ? " open" : "") + '" data-aisle="' + esc(a.id) + '">'
+      + '<button type="button" class="csec-h" data-act="sec-toggle" data-id="' + esc(a.id) + '" aria-expanded="' + open + '">'
+      + '<span class="csec-n">' + esc(a.name) + '</span><span class="csec-c">' + (onList ? '<b>' + onList + "</b> · " : "") + its.length + "</span>" + ICON.chev + "</button>"
+      + (open ? (its.length ? '<ul class="plain">' + its.map(function(i){ return itemRow(i, false); }).join("") + "</ul>" : '<p class="csec-empty">Aucun produit</p>') : "")
+      + "</section>";
+  });
+  if (terms.length && !html) html = '<div class="empty">' + ICON.cart + "<h2>Aucun résultat</h2><p>Aucun produit ne correspond à « " + esc($("#cq").value.trim()) + " ».</p>"
+    + '<button type="button" data-act="cat-create">Créer « ' + esc(cap($("#cq").value.trim())) + " »</button></div>";
+  out.innerHTML = html;
 }
 
 function renderDatalist(){
@@ -1088,12 +1135,13 @@ function renderDatalist(){
     .map(function(i){ return '<option value="' + esc(i.name) + '"></option>'; }).join("");
 }
 
-var TITLES = {list:"Courses", plan:"Planning", meals:"Repas", aisles:"Rayons"};
+var TITLES = {list:"Liste", aisles:"Rayons", meals:"Repas", plan:"Planning"};
+function allExpanded(){ return state.aisles.every(function(a){ return ui.expanded[a.id]; }); }
 function renderNav(){
   $("#nb-title").textContent = TITLES[ui.tab];
   var r = "";
   if (ui.tab === "meals") r = '<button type="button" class="nb-btn" data-act="new-meal" aria-label="Nouveau repas">' + ICON.navPlus + "</button>";
-  if (ui.tab === "aisles") r = '<button type="button" class="nb-btn' + (ui.editAisles ? " strong" : "") + '" data-act="aisle-edit">' + (ui.editAisles ? "OK" : "Modifier") + "</button>";
+  if (ui.tab === "aisles") r = '<button type="button" class="nb-btn" data-act="toggle-all">' + (allExpanded() ? "Tout réduire" : "Tout développer") + "</button>";
   $("#nb-right").innerHTML = r;
   var act = $("#view-" + ui.tab + " .lt-act"); if (act) act.innerHTML = r;
 }
@@ -1104,10 +1152,10 @@ function onScroll(){
 
 function setTab(t){
   ui.tab = t;
-  if (t !== "aisles" && ui.editAisles) { ui.editAisles = false; renderAisles(); }
+  if (cm) closeMenu();
   document.body.dataset.tab = t;
   document.querySelectorAll(".tabbar button").forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.tab === t)); });
-  ["list","plan","meals","aisles"].forEach(function(v){ $("#view-" + v).hidden = v !== t; });
+  ["list","aisles","meals","plan"].forEach(function(v){ $("#view-" + v).hidden = v !== t; });
   renderNav();
   window.scrollTo(0, 0);
   onScroll();
@@ -1517,17 +1565,17 @@ function endSwipe(e){
   var id = s.li.dataset.id;
   if (e.type === "pointercancel") { closeRow(s.li); return; }
   if (s.lead) { closeRow(s.li); setTimeout(function(){ toggleItem(id); }, 200); return; }
-  if (s.full) { closeRow(s.li); setTimeout(function(){ if (ui.mode === "route") removeFromList(id); else confirmDelete(id); }, 200); return; }
+  if (s.full) { var inList = !!s.li.closest("#route"); closeRow(s.li); setTimeout(function(){ if (inList) removeFromList(id); else confirmDelete(id); }, 200); return; }
   if (s.x <= -50) { setOffset(s.li, -OPEN_W); openRow = s.li; return; }
   closeRow(s.li);
 }
 document.addEventListener("pointerup", endSwipe);
 document.addEventListener("pointercancel", endSwipe);
 document.addEventListener("click", function(e){
-  if (Date.now() < swallowUntil && !e.target.closest(".sw-r") && !(hapticEl && hapticEl.contains(e.target))) { e.stopPropagation(); e.preventDefault(); }
+  if (Date.now() < swallowUntil && !e.target.closest(".sw-r, .cm") && !(hapticEl && hapticEl.contains(e.target))) { e.stopPropagation(); e.preventDefault(); }
 }, true);
 
-/* ---------- Drag to reorder aisles (≡ handle, or long press = Haptic Touch) ---------- */
+/* ---------- Aisle reorder: sections fold to their headers while one is dragged ---------- */
 var drag = null;
 function dragMove(){
   var d = drag, dy = d.cy + window.scrollY - d.startY;
@@ -1553,36 +1601,44 @@ function aisleLoop(){
   if (v) { window.scrollBy(0, v); dragMove(); }
   drag.raf = requestAnimationFrame(aisleLoop);
 }
-function startAisleDrag(li, clientY, pointerId, captureEl){
-  var rows = Array.from($("#aisle-list").children), from = rows.indexOf(li);
-  if (from < 0) return;
-  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  var lb = li.getBoundingClientRect(), first = rows[0].getBoundingClientRect(), last = rows[rows.length - 1].getBoundingClientRect();
-  drag = {li:li, rows:rows, from:from, to:from, h:lb.height, id:pointerId, cy:clientY, startY:clientY + window.scrollY,
+function startAisleDrag(sec, clientY, pointerId){
+  var cat = $("#catalog"), id = sec.dataset.aisle;
+  cat.classList.add("reorder");
+  sec = cat.querySelector('.csec[data-aisle="' + id + '"]');
+  var rows = Array.from(cat.querySelectorAll(".csec")), from = rows.indexOf(sec);
+  if (from < 0) { cat.classList.remove("reorder"); return; }
+  var r0 = sec.getBoundingClientRect();
+  window.scrollTo(0, r0.top + window.scrollY - (clientY - r0.height / 2));
+  var lb = sec.getBoundingClientRect(), first = rows[0].getBoundingClientRect(), last = rows[rows.length - 1].getBoundingClientRect();
+  var dy0 = clientY - (lb.top + lb.height / 2);
+  drag = {li:sec, rows:rows, from:from, to:from, h:lb.height, id:pointerId, cy:clientY, startY:clientY + window.scrollY - dy0, aisle:id,
     mids:rows.map(function(r){ var b = r.getBoundingClientRect(); return b.top + window.scrollY + b.height / 2; }),
     minDy:first.top - lb.top, maxDy:last.bottom - lb.bottom};
-  li.classList.add("dragging"); $("#aisle-list").classList.add("reordering");
-  try { captureEl.setPointerCapture(pointerId); } catch (err) {}
-  haptic();
+  sec.classList.add("dragging"); cat.classList.add("reordering");
+  try { sec.setPointerCapture(pointerId); } catch (err) {}
+  dragMove();
   drag.raf = requestAnimationFrame(aisleLoop);
 }
 function endAisleDrag(e){
   var d = drag; drag = null; cancelAnimationFrame(d.raf);
   swallowUntil = Date.now() + 400;
-  $("#aisle-list").classList.remove("reordering");
+  var cat = $("#catalog"), fingerY = d.cy;
+  cat.classList.remove("reordering", "reorder");
   d.rows.forEach(function(r){ r.style.transform = ""; });
   d.li.classList.remove("dragging");
   if (e.type !== "pointercancel" && d.to !== d.from) {
     state.aisles.splice(d.to, 0, state.aisles.splice(d.from, 1)[0]);
     commit();
   }
+  var sec = cat.querySelector('.csec[data-aisle="' + d.aisle + '"]');
+  if (sec) window.scrollTo(0, sec.getBoundingClientRect().top + window.scrollY - fingerY + 26);
 }
 
-/* ---------- Catalogue: long press a product, drop it on another aisle ---------- */
+/* ---------- Drag a product onto another aisle ---------- */
 var idrag = null;
 function itemTarget(x, y){
-  var el = document.elementFromPoint(x, y), sec = el && el.closest && el.closest("#route .lsec");
-  return sec || null;
+  var el = document.elementFromPoint(x, y);
+  return (el && el.closest && el.closest("#catalog .lsec")) || null;
 }
 function itemMove(){
   var d = idrag;
@@ -1600,17 +1656,14 @@ function itemLoop(){
   if (v) { window.scrollBy(0, v); itemMove(); }
   idrag.raf = requestAnimationFrame(itemLoop);
 }
-function startItemDrag(li, x, y, pointerId){
+function startItemDrag(li, x0, y0, x, y, pointerId){
   var it = itemById(li.dataset.id); if (!it) return;
-  var r = li.getBoundingClientRect(), ghost = li.cloneNode(true);
-  ghost.className = "row item ghost"; ghost.removeAttribute("data-id");
-  ghost.querySelectorAll("[data-act]").forEach(function(b){ b.removeAttribute("data-act"); });
-  ghost.style.cssText = "left:" + r.left + "px;top:" + r.top + "px;width:" + r.width + "px";
+  var ghost = liftedCopy(li);
+  ghost.classList.add("ghost");
   document.body.appendChild(ghost);
   li.classList.add("lifted");
-  idrag = {li:li, id:pointerId, item:it.id, from:it.aisle, ghost:ghost, x0:x, y0:y, cx:x, cy:y, over:null};
+  idrag = {li:li, id:pointerId, item:it.id, from:it.aisle, ghost:ghost, x0:x0, y0:y0, cx:x, cy:y, over:null};
   try { li.setPointerCapture(pointerId); } catch (err) {}
-  haptic();
   itemMove();
   idrag.raf = requestAnimationFrame(itemLoop);
 }
@@ -1625,25 +1678,80 @@ function endItemDrag(e){
   }
 }
 
-/* ---------- Long press detection ---------- */
-var lp = null, LP_MS = 420;
+/* ---------- Haptic Touch: long press lifts the row, blurs the page and shows a context menu.
+   Moving the finger while still pressing turns it into a drag, like UIKit's menu + drag interaction. ---------- */
+var cm = null, lp = null, LP_MS = 420;
+function liftedCopy(el){
+  var r = el.getBoundingClientRect(), c = el.cloneNode(true);
+  c.removeAttribute("data-id");
+  c.querySelectorAll("[data-act],[id]").forEach(function(x){ x.removeAttribute("data-act"); x.removeAttribute("id"); });
+  c.classList.add("lift");
+  c.setAttribute("aria-hidden", "true");
+  c.style.cssText = "left:" + r.left + "px;top:" + r.top + "px;width:" + r.width + "px;height:" + r.height + "px";
+  return c;
+}
+function menuActions(kind, el){
+  if (kind === "aisle") {
+    var aid = el.closest(".csec").dataset.aisle;
+    return [
+      {label:"Renommer", icon:ICON.pencil, run:function(){ openAisleSheet(aid); }},
+      {label:"Supprimer le rayon", icon:ICON.trash, danger:true, disabled:aid === DIVERS, run:function(){ confirmDeleteAisle(aid); }}
+    ];
+  }
+  var id = el.dataset.id, on = isNeeded(id);
+  if (kind === "list") return [
+    {label:on ? "Acheté" : "Remettre sur la liste", icon:on ? ICON.checkC : ICON.plusC, run:function(){ toggleItem(id); }},
+    {label:"Modifier", icon:ICON.pencil, run:function(){ openItemSheet({id:id}); }},
+    {label:"Retirer de la liste", icon:ICON.minusC, danger:true, run:function(){ removeFromList(id); }}
+  ];
+  return [
+    {label:on ? "Retirer de la liste" : "Ajouter à la liste", icon:on ? ICON.minusC : ICON.plusC, run:function(){ toggleItem(id); }},
+    {label:"Modifier", icon:ICON.pencil, run:function(){ openItemSheet({id:id}); }},
+    {label:"Supprimer", icon:ICON.trash, danger:true, run:function(){ confirmDelete(id); }}
+  ];
+}
+function openMenu(kind, el, x, y, pointerId){
+  var acts = menuActions(kind, el), r = el.getBoundingClientRect();
+  var ov = document.createElement("div"); ov.className = "cm-ov";
+  var pv = liftedCopy(el); pv.classList.add("cm-pv");
+  var menu = document.createElement("div"); menu.className = "cm"; menu.setAttribute("role", "menu");
+  menu.innerHTML = acts.map(function(a, i){
+    return '<button type="button" role="menuitem" class="cm-i' + (a.danger ? " danger" : "") + '" data-cm="' + i + '"' + (a.disabled ? " disabled" : "") + "><span>" + esc(a.label) + "</span>" + a.icon + "</button>";
+  }).join("");
+  document.body.appendChild(ov); document.body.appendChild(pv); document.body.appendChild(menu);
+  var mh = menu.offsetHeight, mw = menu.offsetWidth, vb = window.innerHeight - 90;
+  var below = r.bottom + 10 + mh <= vb, top = below ? r.bottom + 10 : Math.max(12, r.top - 10 - mh);
+  menu.style.top = top + "px";
+  menu.style.left = Math.min(Math.max(12, r.left + 16), window.innerWidth - mw - 12) + "px";
+  menu.style.transformOrigin = (below ? "top" : "bottom") + " left";
+  el.classList.add("cm-src");
+  requestAnimationFrame(function(){ ov.classList.add("in"); pv.classList.add("in"); menu.classList.add("in"); });
+  haptic();
+  cm = {kind:kind, el:el, acts:acts, ov:ov, pv:pv, menu:menu, pid:pointerId, x0:x, y0:y, down:true};
+}
+function closeMenu(){
+  if (!cm) return;
+  var m = cm; cm = null;
+  m.el.classList.remove("cm-src");
+  [m.ov, m.pv, m.menu].forEach(function(n){ n.classList.remove("in"); n.classList.add("out"); });
+  setTimeout(function(){ m.ov.remove(); m.pv.remove(); m.menu.remove(); }, 200);
+}
 function cancelLp(){ if (lp) { clearTimeout(lp.timer); lp = null; } }
 document.addEventListener("pointerdown", function(e){
   if (e.pointerType === "mouse" && e.button !== 0) return;
-  var g = e.target.closest("#aisle-list .grip");
-  if (g && !drag) { e.preventDefault(); startAisleDrag(g.closest(".row"), e.clientY, e.pointerId, g); return; }
-  if (drag || idrag || openRow || Date.now() < swallowUntil) return;
-  if (e.target.closest(".stepper,.capsule,.info,input")) return;
-  var aisleRow = !ui.editAisles && e.target.closest("#aisle-list .row");
-  var itemRow = ui.mode === "all" && e.target.closest("#route .row.item");
-  if (!aisleRow && !itemRow) return;
+  if (cm || drag || idrag || openRow || Date.now() < swallowUntil) return;
+  var t = e.target, el, kind;
+  if (t.closest(".stepper,.capsule,.info,input,.sw-r")) return;
+  if ((el = t.closest("#catalog .csec-h"))) kind = "aisle";
+  else if ((el = t.closest("#catalog .row.item"))) kind = "item";
+  else if ((el = t.closest("#route .row.item"))) kind = "list";
+  else return;
   cancelLp();
-  lp = {el:aisleRow || itemRow, kind:aisleRow ? "aisle" : "item", id:e.pointerId, x0:e.clientX, y0:e.clientY, cx:e.clientX, cy:e.clientY};
+  lp = {el:el, kind:kind, id:e.pointerId, x0:e.clientX, y0:e.clientY, cx:e.clientX, cy:e.clientY};
   lp.timer = setTimeout(function(){
     var l = lp; lp = null; if (!l) return;
     sw = null;
-    if (l.kind === "aisle") startAisleDrag(l.el, l.cy, l.id, l.el);
-    else startItemDrag(l.el, l.cx, l.cy, l.id);
+    openMenu(l.kind, l.el, l.cx, l.cy, l.id);
   }, LP_MS);
 });
 document.addEventListener("pointermove", function(e){
@@ -1651,27 +1759,48 @@ document.addEventListener("pointermove", function(e){
     lp.cx = e.clientX; lp.cy = e.clientY;
     if (Math.abs(lp.cx - lp.x0) > 8 || Math.abs(lp.cy - lp.y0) > 8) cancelLp();
   }
+  if (cm && cm.down && e.pointerId === cm.pid && cm.kind !== "list") {
+    var dx = e.clientX - cm.x0, dy = e.clientY - cm.y0;
+    if (dx * dx + dy * dy > 100 && !(cm.kind === "aisle" && searchTerms().length)) {
+      var m = cm; closeMenu();
+      if (m.kind === "item") startItemDrag(m.el, m.x0, m.y0, e.clientX, e.clientY, m.pid);
+      else startAisleDrag(m.el.closest(".csec"), e.clientY, m.pid);
+    }
+  }
   if (drag && e.pointerId === drag.id) { drag.cy = e.clientY; dragMove(); }
   if (idrag && e.pointerId === idrag.id) { idrag.cx = e.clientX; idrag.cy = e.clientY; itemMove(); }
 });
 function endPointer(e){
   if (lp && e.pointerId === lp.id) cancelLp();
+  if (cm && cm.down && e.pointerId === cm.pid) {
+    cm.down = false; swallowUntil = Date.now() + 350;
+    if (e.type === "pointercancel") closeMenu();
+  }
   if (drag && e.pointerId === drag.id) endAisleDrag(e);
   if (idrag && e.pointerId === idrag.id) endItemDrag(e);
 }
 document.addEventListener("pointerup", endPointer);
 document.addEventListener("pointercancel", endPointer);
-document.addEventListener("touchmove", function(e){ if (drag || idrag) e.preventDefault(); }, {passive:false});
-document.addEventListener("contextmenu", function(e){ if (e.target.closest("#route .row, #aisle-list .row")) e.preventDefault(); });
+document.addEventListener("touchmove", function(e){ if (drag || idrag || cm) e.preventDefault(); }, {passive:false});
+document.addEventListener("contextmenu", function(e){ if (e.target.closest("#route .row, #catalog .row, #catalog .csec-h, .cm, .cm-ov")) e.preventDefault(); });
+document.addEventListener("keydown", function(e){ if (e.key === "Escape" && cm) closeMenu(); });
 
 /* ---------- Events ---------- */
 document.addEventListener("click", function(e){
+  var mi = e.target.closest(".cm-i");
+  if (mi && cm) { var act = cm.acts[+mi.dataset.cm]; closeMenu(); if (act && !act.disabled) act.run(); return; }
+  if (e.target.closest(".cm-ov")) { closeMenu(); return; }
   var b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
   var id = b.dataset.id;
   switch (b.dataset.act) {
     case "tab": setTab(b.dataset.tab); break;
-    case "mode": ui.mode = b.dataset.mode; renderList(); break;
-    case "tick": haptic(); toggleItem(id); break;
+    case "tick":
+      haptic();
+      if (ui.tab === "list" && !ui.showBought && isNeeded(id)) {
+        var row = b.closest(".row"); row.querySelector(".mark").classList.add("done"); row.classList.add("leaving");
+        setTimeout(function(){ toggleItem(id); }, 450);
+      } else toggleItem(id);
+      break;
     case "qty-inc": haptic(); adjustQty(id, 1); break;
     case "qty-dec": haptic(); adjustQty(id, -1); break;
     case "qty-edit": openQtySheet(id); break;
@@ -1689,14 +1818,17 @@ document.addEventListener("click", function(e){
     case "drop-portion": dropPortion(b.dataset.key); break;
     case "clear-plan": clearPlan(); break;
     case "clear-bought": bought.clear(); renderList(); break;
+    case "show-bought": ui.showBought = true; savePrefs(); renderList(); break;
+    case "hide-bought": ui.showBought = false; savePrefs(); renderList(); break;
+    case "sec-toggle": if (ui.expanded[id]) delete ui.expanded[id]; else ui.expanded[id] = true; savePrefs(); renderCatalog(); renderNav(); break;
+    case "toggle-all":
+      if (allExpanded()) ui.expanded = {}; else state.aisles.forEach(function(a){ ui.expanded[a.id] = true; });
+      savePrefs(); renderCatalog(); renderNav(); break;
+    case "new-aisle": openAisleSheet(null); break;
+    case "cat-create": openItemSheet({name:cap($("#cq").value.trim())}); break;
     case "import": openImportSheet(); break;
     case "goto-meals": setTab("meals"); break;
-    case "goto-all": ui.mode = "all"; renderList(); window.scrollTo(0, 0); break;
-    case "aisle-up": moveAisle(id, -1); break;
-    case "aisle-down": moveAisle(id, 1); break;
-    case "aisle-del": deleteAisle(id); break;
-    case "add-aisle": addAisle(); break;
-    case "aisle-edit": ui.editAisles = !ui.editAisles; renderNav(); renderAisles(); break;
+    case "goto-all": setTab("aisles"); break;
   }
 });
 window.addEventListener("scroll", onScroll, {passive:true});
@@ -1716,7 +1848,7 @@ $("#qa").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.pre
 $("#qa").addEventListener("input", renderSugg);
 $("#qa").addEventListener("focus", renderSugg);
 $("#qa").addEventListener("blur", function(){ setTimeout(hideSugg, 150); });
-$("#new-aisle").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); addAisle(); } });
+$("#cq").addEventListener("input", renderCatalog);
 
 setSync("local");
 var patched = applyCatalogPatch(state);
