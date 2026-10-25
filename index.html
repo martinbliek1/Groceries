@@ -215,8 +215,9 @@ body[data-tab="meals"] .tip,body[data-tab="plan"] .tip{background:var(--card)}
 .cm-src{opacity:0}
 #route .row.item,#catalog .row.item,#catalog .csec-h{transition:transform .28s cubic-bezier(.2,.8,.2,1)}
 #route .row.item.leaving{opacity:.35;transition:opacity .4s,transform .28s cubic-bezier(.2,.8,.2,1)}
-#route .row.item.pressing,#catalog .row.item.pressing,#catalog .csec-h.pressing{transform:scale(.965);transition:transform .33s cubic-bezier(.45,0,.55,1)}
-.row.item.pressing .sw-fg,.csec-h.pressing{background:var(--card2)}
+.cm-ov.pressing,.cm-pv.pressing-copy{transition:none}
+.lift.pressing-copy{--p:0;border-radius:calc(var(--p) * 14px);box-shadow:0 14px 36px rgba(0,0,0,calc(var(--p) * .22));background:color-mix(in srgb,var(--card) calc(var(--p) * 100%),var(--bg-plain))}
+.lift.pressing-copy .sw-fg{background:transparent}
 .cm-pv{transform:scale(.965);transition:transform .5s cubic-bezier(.3,1.5,.55,1),opacity .2s}
 .cm-pv.in{transform:scale(1.03)}
 .cm-pv.out{transform:scale(1);opacity:0;transition:transform .22s ease-out,opacity .22s ease-in}
@@ -1853,12 +1854,12 @@ function endItemDrag(e){
 
 /* ---------- Haptic Touch: long press lifts the row, blurs the page and shows a context menu.
    Moving the finger while still pressing turns it into a drag, like UIKit's menu + drag interaction. ---------- */
-var cm = null, lp = null, LP_MS = 420;
+var cm = null, lp = null, LP_MS = 480, PRESS_DELAY = 110;
 function liftedCopy(el){
   var r = el.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight, c = el.cloneNode(true);
   c.removeAttribute("data-id");
   c.querySelectorAll("[data-act],[id]").forEach(function(x){ x.removeAttribute("data-act"); x.removeAttribute("id"); });
-  c.classList.remove("pressing", "cm-src");
+  c.classList.remove("cm-src");
   c.classList.add("lift");
   c.setAttribute("aria-hidden", "true");
   c.style.cssText = "left:" + (r.left + (r.width - w) / 2) + "px;top:" + (r.top + (r.height - h) / 2) + "px;width:" + w + "px;height:" + h + "px";
@@ -1884,22 +1885,29 @@ function menuActions(kind, el){
     {label:"Supprimer", icon:ICON.trash, danger:true, run:function(){ confirmDelete(id); }}
   ];
 }
-function openMenu(kind, el, x, y, pointerId){
-  var acts = menuActions(kind, el), r = el.getBoundingClientRect();
-  var ov = document.createElement("div"); ov.className = "cm-ov";
-  var pv = liftedCopy(el); pv.classList.add("cm-pv");
+function openMenu(kind, el, x, y, pointerId, press){
+  var acts = menuActions(kind, el), r = el.getBoundingClientRect(), ov, pv;
+  if (press && press.pv) {
+    ov = press.ov; pv = press.pv;
+    ov.classList.add("in"); ov.classList.remove("pressing");
+    ov.style.opacity = ""; ov.style.backdropFilter = ""; ov.style.webkitBackdropFilter = "";
+    pv.classList.remove("pressing-copy"); pv.style.transform = ""; pv.style.removeProperty("--p");
+  } else {
+    ov = document.createElement("div"); ov.className = "cm-ov";
+    pv = liftedCopy(el); pv.classList.add("cm-pv");
+    document.body.appendChild(ov); document.body.appendChild(pv);
+  }
   var menu = document.createElement("div"); menu.className = "cm"; menu.setAttribute("role", "menu");
   menu.innerHTML = acts.map(function(a, i){
     return '<button type="button" role="menuitem" class="cm-i' + (a.danger ? " danger" : "") + '" data-cm="' + i + '"' + (a.disabled ? " disabled" : "") + "><span>" + esc(a.label) + "</span>" + a.icon + "</button>";
   }).join("");
-  document.body.appendChild(ov); document.body.appendChild(pv); document.body.appendChild(menu);
+  document.body.appendChild(menu);
   var mh = menu.offsetHeight, mw = menu.offsetWidth, vb = window.innerHeight - 90;
   var below = r.bottom + 10 + mh <= vb, top = below ? r.bottom + 10 : Math.max(12, r.top - 10 - mh);
   menu.style.top = top + "px";
   menu.style.left = Math.min(Math.max(12, r.left + 16), window.innerWidth - mw - 12) + "px";
   menu.style.transformOrigin = (below ? "top" : "bottom") + " left";
   el.classList.add("cm-src");
-  el.classList.remove("pressing");
   pv.offsetHeight;
   requestAnimationFrame(function(){ ov.classList.add("in"); pv.classList.add("in"); menu.classList.add("in"); });
   haptic();
@@ -1912,11 +1920,42 @@ function closeMenu(handoff){
   [m.ov, m.pv, m.menu].forEach(function(n){ n.classList.remove("in"); n.classList.add("out"); });
   setTimeout(function(){ m.el.classList.remove("cm-src"); m.ov.remove(); m.pv.remove(); m.menu.remove(); }, 230);
 }
-function cancelLp(){
+function pressApply(l, e){
+  l.e = e;
+  l.pv.style.setProperty("--p", e.toFixed(3));
+  l.pv.style.transform = "scale(" + (1 - 0.035 * e).toFixed(4) + ")";
+  l.ov.style.opacity = e.toFixed(3);
+  var f = "blur(" + (14 * e).toFixed(1) + "px) saturate(" + Math.round(100 + 20 * e) + "%)";
+  l.ov.style.webkitBackdropFilter = f; l.ov.style.backdropFilter = f;
+}
+function pressLoop(){
+  var l = lp; if (!l || !l.pv) return;
+  var t = Math.min(1, (performance.now() - l.t0) / l.dur);
+  pressApply(l, t * t * (3 - 2 * t));
+  l.raf = requestAnimationFrame(pressLoop);
+}
+function startPress(l){
+  l.ov = document.createElement("div"); l.ov.className = "cm-ov pressing";
+  l.pv = liftedCopy(l.el); l.pv.classList.add("cm-pv", "pressing-copy");
+  document.body.appendChild(l.ov); document.body.appendChild(l.pv);
+  l.el.classList.add("cm-src");
+  l.t0 = performance.now(); l.dur = LP_MS - PRESS_DELAY;
+  pressApply(l, 0);
+  l.raf = requestAnimationFrame(pressLoop);
+}
+function cancelLp(animate){
   if (!lp) return;
-  clearTimeout(lp.timer); clearTimeout(lp.pressT);
-  lp.el.classList.remove("pressing");
-  lp = null;
+  var l = lp; lp = null;
+  clearTimeout(l.timer); clearTimeout(l.pressT); cancelAnimationFrame(l.raf);
+  if (!l.pv) return;
+  function done(){ l.pv.remove(); l.ov.remove(); l.el.classList.remove("cm-src"); }
+  if (!animate) { done(); return; }
+  var from = l.e || 0, t0 = performance.now();
+  (function back(){
+    var t = Math.min(1, (performance.now() - t0) / 180);
+    pressApply(l, from * (1 - t) * (1 - t));
+    if (t < 1) requestAnimationFrame(back); else done();
+  })();
 }
 document.addEventListener("pointerdown", function(e){
   if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -1929,11 +1968,13 @@ document.addEventListener("pointerdown", function(e){
   else return;
   cancelLp();
   lp = {el:el, kind:kind, id:e.pointerId, x0:e.clientX, y0:e.clientY, cx:e.clientX, cy:e.clientY};
-  lp.pressT = setTimeout(function(){ if (lp && lp.el === el) el.classList.add("pressing"); }, 90);
+  lp.pressT = setTimeout(function(){ if (lp && lp.el === el) startPress(lp); }, PRESS_DELAY);
   lp.timer = setTimeout(function(){
     var l = lp; lp = null; if (!l) return;
+    cancelAnimationFrame(l.raf);
     sw = null;
-    openMenu(l.kind, l.el, l.cx, l.cy, l.id);
+    if (l.pv) pressApply(l, 1);
+    openMenu(l.kind, l.el, l.cx, l.cy, l.id, l);
   }, LP_MS);
 });
 document.addEventListener("pointermove", function(e){
@@ -1953,7 +1994,7 @@ document.addEventListener("pointermove", function(e){
   if (idrag && e.pointerId === idrag.id) { idrag.cx = e.clientX; idrag.cy = e.clientY; itemMove(); }
 });
 function endPointer(e){
-  if (lp && e.pointerId === lp.id) cancelLp();
+  if (lp && e.pointerId === lp.id) cancelLp(true);
   if (cm && cm.down && e.pointerId === cm.pid) {
     cm.down = false; swallowUntil = Date.now() + 350;
     if (e.type === "pointercancel") closeMenu();
