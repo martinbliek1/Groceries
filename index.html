@@ -97,6 +97,12 @@ select{appearance:auto}
 .item.got .name{font-weight:400;color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px}
 .item.got .box{border-color:var(--line)}
 .more{flex:none;width:52px;border:0;border-left:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:1.3rem;line-height:1}
+.qty{flex:none;display:flex;align-items:center;gap:6px;padding:0 12px;align-self:center}
+.qty-btn{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:1.1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.qty-btn:active{background:var(--fill)}
+.qty-val{min-width:18px;text-align:center;font-weight:700}
+.qty-pill{flex:none;align-self:center;margin:0 12px;border:1px dashed var(--line);border-radius:999px;padding:6px 12px;background:none;color:var(--route);font:inherit;font-size:.85rem;font-weight:600;white-space:nowrap}
+.qty-pill.set{border-style:solid;background:var(--fill);color:var(--ink)}
 
 .empty-state{background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:20px;margin-top:20px}
 .empty-state h2{margin:0 0 6px;font-size:1.15rem;font-weight:700}
@@ -288,7 +294,7 @@ function norm(str){
 }
 
 /* ---------- State ---------- */
-function blank(){ return {v:1,updatedAt:0,aisles:DEFAULT_AISLES.map(function(a){return {id:a.id,name:a.name};}),items:[],meals:[],planned:[],plan:{},open:{},settings:{linkPlan:false,autoLeft:true},need:{}}; }
+function blank(){ return {v:1,updatedAt:0,aisles:DEFAULT_AISLES.map(function(a){return {id:a.id,name:a.name};}),items:[],meals:[],planned:[],plan:{},open:{},settings:{linkPlan:false,autoLeft:true},need:{},qty:{},qtySpec:{},seedPatch:0}; }
 
 function remap(s, from, to){
   s.meals.forEach(function(m){
@@ -298,6 +304,13 @@ function remap(s, from, to){
     var merged = (s.need[to] || []).slice();
     s.need[from].forEach(function(x){ if (merged.indexOf(x) < 0) merged.push(x); });
     s.need[to] = merged; delete s.need[from];
+  }
+  if (s.qty && s.qty[from] != null) {
+    s.qty[to] = (s.qty[to] || 0) + s.qty[from]; delete s.qty[from];
+  }
+  if (s.qtySpec && s.qtySpec[from] != null) {
+    if (s.qtySpec[to] == null) s.qtySpec[to] = s.qtySpec[from];
+    delete s.qtySpec[from];
   }
 }
 function dedupe(s){
@@ -348,6 +361,21 @@ function sanitize(raw){
       if (src.length) out.need[k] = src;
     });
   }
+  out.qty = {};
+  if (s.qty && typeof s.qty === "object") {
+    Object.keys(s.qty).forEach(function(k){
+      var n = s.qty[k];
+      if (out.need[k] && typeof n === "number" && n >= 1 && Math.floor(n) === n) out.qty[k] = n;
+    });
+  }
+  out.qtySpec = {};
+  if (s.qtySpec && typeof s.qtySpec === "object") {
+    Object.keys(s.qtySpec).forEach(function(k){
+      var v = s.qtySpec[k];
+      if (out.need[k] && v && ["g","ml","u"].indexOf(v.u) >= 0 && typeof v.n === "number" && v.n > 0) out.qtySpec[k] = {n:v.n, u:v.u};
+    });
+  }
+  out.seedPatch = typeof s.seedPatch === "number" ? s.seedPatch : 0;
   dedupe(out);
   return out;
 }
@@ -355,6 +383,43 @@ function loadLocal(){ try { var raw = localStorage.getItem(LS_KEY); return raw ?
 function saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
 
 var SEED = {"aisles": [{"id": "a-boulangerie", "name": "Boulangerie"}, {"id": "a-fruits", "name": "Fruits"}, {"id": "a-legumes", "name": "Légumes"}, {"id": "a-pates-fraiches", "name": "Pâtes fraîches"}, {"id": "a-jambon", "name": "Jambon"}, {"id": "a-lardons", "name": "Lardons"}, {"id": "a-viandes", "name": "Viandes"}, {"id": "a-poisson", "name": "Poisson"}, {"id": "a-traiteur-apero", "name": "Traiteur apéro"}, {"id": "a-oeufs", "name": "Œufs"}, {"id": "a-barres-de-cereales", "name": "Barres de céréales"}, {"id": "a-frigo-fromages", "name": "Frigo fromages"}, {"id": "a-cereales-et-petit-dej", "name": "Céréales et petit-déj"}, {"id": "a-conserves", "name": "Conserves"}, {"id": "a-huiles-et-vinaigres", "name": "Huiles et vinaigres"}, {"id": "a-pates-et-sauces", "name": "Pâtes et sauces"}, {"id": "a-desserts-gourmands", "name": "Desserts gourmands"}, {"id": "a-pq-et-sopalin", "name": "PQ et sopalin"}, {"id": "a-entretien", "name": "Entretien"}, {"id": "a-chips-et-apero", "name": "Chips et apéro"}, {"id": "a-yaourts", "name": "Yaourts"}, {"id": "a-surgeles", "name": "Surgelés"}, {"id": "a-lait", "name": "Lait"}, {"id": "a-boissons", "name": "Boissons"}, {"id": "a-bazar-maison", "name": "Bazar maison"}, {"id": "a-papeterie", "name": "Papeterie"}, {"id": "a-hygiene", "name": "Hygiène"}, {"id": "a-biscuits", "name": "Biscuits"}, {"id": "a-caisse", "name": "Caisse"}, {"id": "a-divers", "name": "Divers"}], "items": [{"aisle": "a-boulangerie", "id": "i-pain", "name": "Pain", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pain-complet", "name": "Pain complet", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pain-au-lait", "name": "Pain au lait", "staple": false}, {"aisle": "a-boulangerie", "id": "i-muffins", "name": "Muffins", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pains-burger", "name": "Pains burger", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pains-hot-dog", "name": "Pains hot-dog", "staple": false}, {"aisle": "a-boulangerie", "id": "i-pain-a-sandwich", "name": "Pain à sandwich", "staple": false}, {"aisle": "a-fruits", "id": "i-bananes", "name": "Bananes", "staple": false}, {"aisle": "a-fruits", "id": "i-poires", "name": "Poires", "staple": false}, {"aisle": "a-fruits", "id": "i-pommes", "name": "Pommes", "staple": false}, {"aisle": "a-fruits", "id": "i-peches", "name": "Pêches", "staple": false}, {"aisle": "a-fruits", "id": "i-kiwis", "name": "Kiwis", "staple": false}, {"aisle": "a-fruits", "id": "i-oranges", "name": "Oranges", "staple": false}, {"aisle": "a-fruits", "id": "i-citrons", "name": "Citrons", "staple": false}, {"aisle": "a-fruits", "id": "i-avocats", "name": "Avocats", "staple": false}, {"aisle": "a-legumes", "id": "i-tomates", "name": "Tomates", "staple": false}, {"aisle": "a-legumes", "id": "i-tomates-cerises", "name": "Tomates cerises", "staple": false}, {"aisle": "a-legumes", "id": "i-poivrons", "name": "Poivrons", "staple": false}, {"aisle": "a-legumes", "id": "i-courgettes", "name": "Courgettes", "staple": false}, {"aisle": "a-legumes", "id": "i-carottes", "name": "Carottes", "staple": false}, {"aisle": "a-legumes", "id": "i-champignons", "name": "Champignons", "staple": false}, {"aisle": "a-legumes", "id": "i-oignons", "name": "Oignons", "staple": false}, {"aisle": "a-legumes", "id": "i-brocoli", "name": "Brocoli", "staple": false}, {"aisle": "a-legumes", "id": "i-epinards-frais", "name": "Épinards frais", "staple": false}, {"aisle": "a-legumes", "id": "i-pommes-de-terre-en-tranches", "name": "Pommes de terre en tranches", "staple": false}, {"aisle": "a-legumes", "id": "i-puree-de-legumes", "name": "Purée de légumes", "staple": false}, {"aisle": "a-pates-fraiches", "id": "i-gnocchis", "name": "Gnocchis", "staple": false}, {"aisle": "a-pates-fraiches", "id": "i-raviolis-farcis", "name": "Raviolis farcis", "staple": false}, {"aisle": "a-jambon", "id": "i-jambon", "name": "Jambon", "staple": false}, {"aisle": "a-jambon", "id": "i-jambon-sec", "name": "Jambon sec", "staple": false}, {"aisle": "a-jambon", "id": "i-knackis", "name": "Knackis", "staple": false}, {"aisle": "a-jambon", "id": "i-rillettes", "name": "Rillettes", "staple": false}, {"aisle": "a-lardons", "id": "i-lardons-ou-pancetta", "name": "Lardons ou pancetta", "staple": false}, {"aisle": "a-lardons", "id": "i-bacon", "name": "Bacon", "staple": false}, {"aisle": "a-viandes", "id": "i-steaks-haches", "name": "Steaks hachés", "staple": false}, {"aisle": "a-viandes", "id": "i-viande-hachee", "name": "Viande hachée", "staple": false}, {"aisle": "a-viandes", "id": "i-saucisses", "name": "Saucisses", "staple": false}, {"aisle": "a-viandes", "id": "i-blancs-de-poulet", "name": "Blancs de poulet", "staple": false}, {"aisle": "a-viandes", "id": "i-ailes-de-poulet", "name": "Ailes de poulet", "staple": false}, {"aisle": "a-viandes", "id": "i-cordons-bleus", "name": "Cordons bleus", "staple": false}, {"aisle": "a-poisson", "id": "i-saumon", "name": "Saumon", "staple": false}, {"aisle": "a-poisson", "id": "i-mini-crevettes", "name": "Mini crevettes", "staple": false}, {"aisle": "a-traiteur-apero", "id": "i-houmous", "name": "Houmous", "staple": false}, {"aisle": "a-traiteur-apero", "id": "i-tapenade-poivrons", "name": "Tapenade poivrons", "staple": false}, {"aisle": "a-traiteur-apero", "id": "i-tarama", "name": "Tarama", "staple": false}, {"aisle": "a-oeufs", "id": "i-oeufs", "name": "Œufs", "staple": false}, {"aisle": "a-barres-de-cereales", "id": "i-barres-de-cereales", "name": "Barres de céréales", "staple": false}, {"aisle": "a-yaourts", "id": "i-fromage-blanc", "name": "Fromage blanc", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-fromage-frais", "name": "Fromage frais", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-comte", "name": "Comté", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-fromage-en-tranches", "name": "Fromage en tranches", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-parmesan", "name": "Parmesan", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-fromage-rape", "name": "Fromage râpé", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-mozzarella", "name": "Mozzarella", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-beurre", "name": "Beurre", "staple": false}, {"aisle": "a-frigo-fromages", "id": "i-creme-fraiche", "name": "Crème fraîche", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-special-k", "name": "Special K", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-muesli-chocolat", "name": "Muesli chocolat", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-granola", "name": "Granola", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-cruesli-melange-de-noix", "name": "Cruesli mélange de noix", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-nutella", "name": "Nutella", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-confiture", "name": "Confiture", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-miel", "name": "Miel", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-peanut-butter", "name": "Peanut butter", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-cacao", "name": "Cacao", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-the-et-tisane", "name": "Thé et tisane", "staple": false}, {"aisle": "a-cereales-et-petit-dej", "id": "i-compotes-et-pom-potes", "name": "Compotes et Pom'Potes", "staple": false}, {"aisle": "a-conserves", "id": "i-thon-en-boite", "name": "Thon en boîte", "staple": false}, {"aisle": "a-conserves", "id": "i-mais", "name": "Maïs", "staple": false}, {"aisle": "a-conserves", "id": "i-haricots", "name": "Haricots", "staple": false}, {"aisle": "a-conserves", "id": "i-baked-beans", "name": "Baked beans", "staple": false}, {"aisle": "a-conserves", "id": "i-lentilles", "name": "Lentilles", "staple": false}, {"aisle": "a-conserves", "id": "i-sauce-tomate", "name": "Sauce tomate", "staple": false}, {"aisle": "a-conserves", "id": "i-soupe-de-legumes", "name": "Soupe de légumes", "staple": false}, {"aisle": "a-conserves", "id": "i-soupe-tomate", "name": "Soupe tomate", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-spaghetti", "name": "Spaghetti", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-penne", "name": "Penne", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-riz", "name": "Riz", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-risotto", "name": "Risotto", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-semoule", "name": "Semoule", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-puree", "name": "Purée", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-sauce-bolognaise", "name": "Sauce bolognaise", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-sauce-napolitaine", "name": "Sauce napolitaine", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-pesto", "name": "Pesto", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-pesto-rouge", "name": "Pesto rouge", "staple": false}, {"aisle": "a-huiles-et-vinaigres", "id": "i-huile", "name": "Huile", "staple": true}, {"aisle": "a-huiles-et-vinaigres", "id": "i-herbes-de-provence", "name": "Herbes de Provence", "staple": true}, {"aisle": "a-pates-et-sauces", "id": "i-mayonnaise", "name": "Mayonnaise", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-sauce-barbecue", "name": "Sauce barbecue", "staple": false}, {"aisle": "a-desserts-gourmands", "id": "i-fondant-au-chocolat", "name": "Fondant au chocolat", "staple": false}, {"aisle": "a-pq-et-sopalin", "id": "i-papier-toilette-ecoplanet", "name": "Papier toilette Ecoplanet", "staple": false}, {"aisle": "a-pq-et-sopalin", "id": "i-sopalin", "name": "Sopalin", "staple": false}, {"aisle": "a-pq-et-sopalin", "id": "i-mouchoirs", "name": "Mouchoirs", "staple": false}, {"aisle": "a-entretien", "id": "i-liquide-vaisselle", "name": "Liquide vaisselle", "staple": false}, {"aisle": "a-entretien", "id": "i-eponges", "name": "Éponges", "staple": false}, {"aisle": "a-entretien", "id": "i-gants-vaisselle", "name": "Gants vaisselle", "staple": false}, {"aisle": "a-entretien", "id": "i-brosse-vaisselle", "name": "Brosse vaisselle", "staple": false}, {"aisle": "a-entretien", "id": "i-brosse-souple", "name": "Brosse souple", "staple": false}, {"aisle": "a-entretien", "id": "i-petits-sacs-poubelle", "name": "Petits sacs poubelle", "staple": false}, {"aisle": "a-entretien", "id": "i-grands-sacs-poubelle", "name": "Grands sacs poubelle", "staple": false}, {"aisle": "a-entretien", "id": "i-spray-javel", "name": "Spray javel", "staple": false}, {"aisle": "a-entretien", "id": "i-nettoyant-vitres-et-salle-de-bain", "name": "Nettoyant vitres et salle de bain", "staple": false}, {"aisle": "a-entretien", "id": "i-nettoyant-wc", "name": "Nettoyant WC", "staple": false}, {"aisle": "a-entretien", "id": "i-bicarbonate-de-soude", "name": "Bicarbonate de soude", "staple": false}, {"aisle": "a-entretien", "id": "i-vinaigre-blanc", "name": "Vinaigre blanc", "staple": false}, {"aisle": "a-entretien", "id": "i-chiffons-microfibre", "name": "Chiffons microfibre", "staple": false}, {"aisle": "a-entretien", "id": "i-raclette-vitres", "name": "Raclette vitres", "staple": false}, {"aisle": "a-entretien", "id": "i-papier-alu", "name": "Papier alu", "staple": false}, {"aisle": "a-entretien", "id": "i-lessive-le-chat-sensitive", "name": "Lessive Le Chat Sensitive", "staple": false}, {"aisle": "a-entretien", "id": "i-adoucissant", "name": "Adoucissant", "staple": false}, {"aisle": "a-entretien", "id": "i-decolor-stop", "name": "Décolor Stop", "staple": false}, {"aisle": "a-entretien", "id": "i-vanish", "name": "Vanish", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-chips", "name": "Chips", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-melange-de-noix", "name": "Mélange de noix", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-cacahuetes", "name": "Cacahuètes", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-raisins-secs", "name": "Raisins secs", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-beef-jerky", "name": "Beef jerky", "staple": false}, {"aisle": "a-chips-et-apero", "id": "i-gressins-et-mini-toasts", "name": "Gressins et mini toasts", "staple": false}, {"aisle": "a-yaourts", "id": "i-yaourts-nature-pas-nestle", "name": "Yaourts nature (pas Nestlé)", "staple": false}, {"aisle": "a-yaourts", "id": "i-mousse-au-chocolat", "name": "Mousse au chocolat", "staple": false}, {"aisle": "a-surgeles", "id": "i-steaks-haches-surgeles", "name": "Steaks hachés surgelés", "staple": false}, {"aisle": "a-surgeles", "id": "i-nuggets", "name": "Nuggets", "staple": false}, {"aisle": "a-surgeles", "id": "i-poisson-surgele", "name": "Poisson surgelé", "staple": false}, {"aisle": "a-surgeles", "id": "i-poisson-pane", "name": "Poisson pané", "staple": false}, {"aisle": "a-surgeles", "id": "i-fish-and-chips", "name": "Fish and chips", "staple": false}, {"aisle": "a-surgeles", "id": "i-lasagnes", "name": "Lasagnes", "staple": false}, {"aisle": "a-surgeles", "id": "i-moussaka", "name": "Moussaka", "staple": false}, {"aisle": "a-surgeles", "id": "i-gratin-dauphinois", "name": "Gratin dauphinois", "staple": false}, {"aisle": "a-surgeles", "id": "i-pommes-de-terre-sautees", "name": "Pommes de terre sautées", "staple": false}, {"aisle": "a-surgeles", "id": "i-puree-surgelee", "name": "Purée surgelée", "staple": false}, {"aisle": "a-surgeles", "id": "i-ratatouille", "name": "Ratatouille", "staple": false}, {"aisle": "a-surgeles", "id": "i-epinards-surgeles", "name": "Épinards surgelés", "staple": false}, {"aisle": "a-surgeles", "id": "i-chou-fleur-surgele", "name": "Chou-fleur surgelé", "staple": false}, {"aisle": "a-surgeles", "id": "i-haricots-verts-surgeles", "name": "Haricots verts surgelés", "staple": false}, {"aisle": "a-surgeles", "id": "i-apero-surgele", "name": "Apéro surgelé", "staple": false}, {"aisle": "a-lait", "id": "i-lait", "name": "Lait", "staple": false}, {"aisle": "a-boissons", "id": "i-evian-1-l", "name": "Evian 1 L", "staple": false}, {"aisle": "a-boissons", "id": "i-may-tea", "name": "May Tea", "staple": false}, {"aisle": "a-boissons", "id": "i-coca-canettes", "name": "Coca (canettes)", "staple": false}, {"aisle": "a-boissons", "id": "i-bieres", "name": "Bières", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-piles-petites", "name": "Piles (petites)", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-ampoule", "name": "Ampoule", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-prise-chargeur", "name": "Prise chargeur", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-souris", "name": "Souris", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-bougies", "name": "Bougies", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-pince-pour-radiateur", "name": "Pince pour radiateur", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-tupperware", "name": "Tupperware", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-presse-agrumes", "name": "Presse-agrumes", "staple": false}, {"aisle": "a-papeterie", "id": "i-criterium", "name": "Critérium", "staple": false}, {"aisle": "a-papeterie", "id": "i-crayon-gris", "name": "Crayon gris", "staple": false}, {"aisle": "a-papeterie", "id": "i-bic-bleu", "name": "Bic bleu", "staple": false}, {"aisle": "a-papeterie", "id": "i-enveloppes", "name": "Enveloppes", "staple": false}, {"aisle": "a-papeterie", "id": "i-cartes-postales", "name": "Cartes postales", "staple": false}, {"aisle": "a-papeterie", "id": "i-pochettes-carton", "name": "Pochettes carton", "staple": false}, {"aisle": "a-hygiene", "id": "i-shampoing", "name": "Shampoing", "staple": false}, {"aisle": "a-hygiene", "id": "i-gel-douche", "name": "Gel douche", "staple": false}, {"aisle": "a-hygiene", "id": "i-deodorant", "name": "Déodorant", "staple": false}, {"aisle": "a-hygiene", "id": "i-dentifrice", "name": "Dentifrice", "staple": false}, {"aisle": "a-hygiene", "id": "i-brosse-a-dents", "name": "Brosse à dents", "staple": false}, {"aisle": "a-hygiene", "id": "i-bain-de-bouche", "name": "Bain de bouche", "staple": false}, {"aisle": "a-hygiene", "id": "i-mousse-a-raser", "name": "Mousse à raser", "staple": false}, {"aisle": "a-hygiene", "id": "i-coton-tiges", "name": "Coton-tiges", "staple": false}, {"aisle": "a-hygiene", "id": "i-baume-a-levres", "name": "Baume à lèvres", "staple": false}, {"aisle": "a-hygiene", "id": "i-cure-dents", "name": "Cure-dents", "staple": false}, {"aisle": "a-hygiene", "id": "i-preservatifs", "name": "Préservatifs", "staple": false}, {"aisle": "a-hygiene", "id": "i-lubrifiant", "name": "Lubrifiant", "staple": false}, {"aisle": "a-biscuits", "id": "i-oreo", "name": "Oreo", "staple": false}, {"aisle": "a-biscuits", "id": "i-cookies-granola", "name": "Cookies granola", "staple": false}, {"aisle": "a-biscuits", "id": "i-petit-beurre-chocolat", "name": "Petit Beurre chocolat", "staple": false}, {"aisle": "a-biscuits", "id": "i-chocolat-milka", "name": "Chocolat Milka", "staple": false}, {"aisle": "a-caisse", "id": "i-chewing-gums", "name": "Chewing-gums", "staple": false}, {"aisle": "a-huiles-et-vinaigres", "id": "i-cumin", "name": "Cumin", "staple": true}, {"aisle": "a-pates-et-sauces", "id": "i-xcmg1mrsaq", "name": "Ketchup", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-4dqlekum05", "name": "Pâtes Coudes Rayés", "staple": false}, {"aisle": "a-pates-et-sauces", "id": "i-w9fzqcfm06", "name": "Pesto Rosso", "staple": false}, {"aisle": "a-yaourts", "id": "i-1jwh90vf50", "name": "Yoplait Skyr Vanille", "staple": false}, {"aisle": "a-entretien", "id": "i-cbtxhdefrj", "name": "Vanish Oxi Action", "staple": false}, {"aisle": "a-bazar-maison", "id": "i-1596mx86ab", "name": "Collier Serage Rilsan", "staple": false}], "meals": [{"id": "m-tartines-thon", "items": ["i-pain-complet", "i-thon-en-boite", "i-fromage-blanc", "i-citrons", "i-avocats"], "name": "Tartines rillettes de thon", "serves": 2}, {"id": "m-tartines-oeufs", "items": ["i-pain-complet", "i-fromage-frais", "i-oeufs", "i-epinards-frais"], "name": "Tartines fromage frais et œufs brouillés", "serves": 1}, {"id": "m-gnocchis", "items": ["i-gnocchis", "i-tomates-cerises", "i-lardons-ou-pancetta", "i-parmesan", "i-huile"], "name": "Gnocchis poêlés, tomates cerises, lardons et parmesan", "serves": 2}, {"id": "m-lentilles", "items": ["i-lentilles", "i-sauce-tomate", "i-courgettes", "i-huile"], "name": "Lentilles, sauce tomate et courgettes", "serves": 2}, {"id": "m-riz-saucisses", "items": ["i-riz", "i-poivrons", "i-saucisses", "i-huile"], "name": "Riz, poivrons poêlés et saucisses", "serves": 2}, {"id": "m-riz-steak", "items": ["i-riz", "i-courgettes", "i-steaks-haches", "i-huile"], "name": "Riz, courgettes poêlées et steak haché", "serves": 2}, {"id": "m-shakshuka", "items": ["i-oeufs", "i-sauce-tomate", "i-poivrons", "i-oignons", "i-cumin", "i-pain-complet", "i-huile"], "name": "Shakshuka", "serves": 2}, {"id": "m-x5avun0m06", "items": ["i-4dqlekum05", "i-w9fzqcfm06", "i-parmesan"], "name": "Pâtes Pesto Rosso", "serves": 2}, {"id": "m-et55cunf50", "items": ["i-lait", "i-cruesli-melange-de-noix", "i-1jwh90vf50"], "name": "Petit Déj", "serves": 2}], "need": {"i-1596mx86ab": ["m"], "i-cbtxhdefrj": ["m"]}, "open": {"2026-10-06|midi": true}, "plan": {"2026-10-04|midi": {"m": "m-tartines-oeufs"}, "2026-10-04|soir": {"left": "2026-10-03|soir", "m": "m-lentilles"}, "2026-10-05|soir": {"m": "m-gnocchis"}, "2026-10-06|midi": {"left": "2026-10-05|soir", "m": "m-gnocchis"}, "2026-10-06|soir": {"m": "m-tartines-thon"}, "2026-10-07|soir": {"left": "2026-10-06|soir", "m": "m-tartines-thon"}}, "planned": ["m-gnocchis", "m-tartines-oeufs", "m-et55cunf50"], "settings": {"autoLeft": false, "linkPlan": false}, "updatedAt": 1791112218711, "v": 1};
+/* ---------- Catalog patches: one-time additive merges, skipped if already applied or already present ---------- */
+var SEED_PATCH_VERSION = 1;
+var PATCH_ITEMS = [
+  {aisle:"a-frigo-fromages", id:"i-feta", name:"Feta", staple:false},
+  {aisle:"a-pates-fraiches", id:"i-pate-a-pizza", name:"Pâte à pizza", staple:false},
+  {aisle:"a-huiles-et-vinaigres", id:"i-curry", name:"Curry", staple:true},
+  {aisle:"a-huiles-et-vinaigres", id:"i-ail-poudre", name:"Ail en poudre", staple:true}
+];
+var PATCH_MEALS = [
+  {id:"m-croque-champignons", items:["i-pain-complet","i-comte","i-jambon","i-champignons"], name:"Croque pain complet, comté, jambon et champignons", serves:2},
+  {id:"m-tartine-epinards-feta", items:["i-pain-complet","i-epinards-frais","i-feta","i-tomates"], name:"Tartine pain complet, épinards, feta et tomates", serves:2},
+  {id:"m-curry-chicken-naan", items:["i-pate-a-pizza","i-blancs-de-poulet","i-curry","i-creme-fraiche","i-fromage-rape"], name:"Curry chicken naan", serves:2}
+];
+var PATCH_ADD_TO_LIST = ["i-ail-poudre"];
+function applyCatalogPatch(s){
+  if ((s.seedPatch || 0) >= SEED_PATCH_VERSION) return false;
+  var aisleIds = {}; s.aisles.forEach(function(a){ aisleIds[a.id] = 1; });
+  var itemIds = {}; s.items.forEach(function(i){ itemIds[i.id] = 1; });
+  function nameTaken(name){ var k = norm(name); return s.items.some(function(i){ return norm(i.name) === k; }); }
+  PATCH_ITEMS.forEach(function(p){
+    if (!itemIds[p.id] && !nameTaken(p.name)) { s.items.push({id:p.id, name:p.name, aisle: aisleIds[p.aisle] ? p.aisle : DIVERS, staple:p.staple}); itemIds[p.id] = 1; }
+  });
+  var mealIds = {}; s.meals.forEach(function(m){ mealIds[m.id] = 1; });
+  PATCH_MEALS.forEach(function(p){
+    if (mealIds[p.id]) return;
+    var its = p.items.filter(function(id){ return itemIds[id]; });
+    if (its.length) { s.meals.push({id:p.id, name:p.name, items:its, serves:p.serves}); mealIds[p.id] = 1; }
+  });
+  PATCH_ADD_TO_LIST.forEach(function(id){
+    if (!itemIds[id]) return;
+    var arr = s.need[id] || []; if (arr.indexOf("m") < 0) arr.push("m");
+    s.need[id] = arr;
+  });
+  s.seedPatch = SEED_PATCH_VERSION;
+  return true;
+}
+
 var state = sanitize(loadLocal() || SEED || blank());
 var bought = new Set();
 var ui = {tab:"list", mode:"route"};
@@ -364,6 +429,22 @@ function mealById(id){ return state.meals.find(function(m){ return m.id === id; 
 function aisleById(id){ return state.aisles.find(function(a){ return a.id === id; }); }
 function findItem(name){ var k = norm(name); return k ? state.items.find(function(i){ return norm(i.name) === k; }) : undefined; }
 function isNeeded(id){ var s = state.need[id]; return Array.isArray(s) && s.length > 0; }
+function isProduce(id){
+  var it = itemById(id); if (!it) return false;
+  var a = aisleById(it.aisle); if (!a) return false;
+  return /fruit|legume/.test(norm(a.name));
+}
+function getQty(id){ return (state.qty && state.qty[id]) || 1; }
+function isMeatFish(id){
+  var it = itemById(id); if (!it) return false;
+  var a = aisleById(it.aisle); if (!a) return false;
+  return /viande|poisson|boucherie|volaille/.test(norm(a.name));
+}
+var QTY_UNIT_LABEL = {g:"g", ml:"mL", u:"u"};
+function qtySpecText(id){
+  var q = state.qtySpec[id]; if (!q) return "";
+  return q.u === "u" ? ("× " + q.n) : (q.n + " " + QTY_UNIT_LABEL[q.u]);
+}
 function addSource(id, src){ var s = state.need[id] || []; if (s.indexOf(src) < 0) s.push(src); state.need[id] = s; }
 function removeSource(id, src){ var s = (state.need[id] || []).filter(function(x){ return x !== src; }); if (s.length) state.need[id] = s; else delete state.need[id]; }
 function getOrCreateItem(name, aisle, staple){
@@ -450,9 +531,15 @@ var PLACARD_RULE = 'Mets "placard": true pour ce qu\'on garde normalement en sto
 /* ---------- Actions ---------- */
 function toggleItem(id){
   if (!itemById(id)) return;
-  if (isNeeded(id)) { delete state.need[id]; if (ui.mode === "route") bought.add(id); }
+  if (isNeeded(id)) { delete state.need[id]; delete state.qty[id]; delete state.qtySpec[id]; if (ui.mode === "route") bought.add(id); }
   else { addSource(id, "m"); bought.delete(id); }
   commit();
+}
+function adjustQty(id, d){
+  if (!isNeeded(id)) return;
+  var n = getQty(id) + d;
+  if (n < 1) { toggleItem(id); return; }
+  state.qty[id] = n; commit();
 }
 /* ---------- Planning ---------- */
 function pad2(n){ return (n < 10 ? "0" : "") + n; }
@@ -735,10 +822,22 @@ function itemRow(i, route){
   var on = isNeeded(i.id), got = route && !on;
   var why = on ? (state.need[i.id] || []).filter(function(s){ return s !== "m"; }).map(function(s){ var m = mealById(s); return m ? m.name : ""; }).filter(Boolean) : [];
   var sub = why.length ? why.join(", ") : (!route && i.staple ? "Au placard" : "");
+  var stepper = (on && isProduce(i.id)) ? (
+    '<div class="qty">'
+    + '<button type="button" class="qty-btn" data-act="qty-dec" data-id="' + esc(i.id) + '" aria-label="Une unité de moins">–</button>'
+    + '<span class="qty-val" aria-live="polite">' + getQty(i.id) + '</span>'
+    + '<button type="button" class="qty-btn" data-act="qty-inc" data-id="' + esc(i.id) + '" aria-label="Une unité de plus">+</button>'
+    + "</div>"
+  ) : "";
+  var qtyPill = (on && isMeatFish(i.id)) ? (
+    '<button type="button" class="qty-pill' + (state.qtySpec[i.id] ? " set" : "") + '" data-act="qty-edit" data-id="' + esc(i.id) + '">'
+    + (state.qtySpec[i.id] ? esc(qtySpecText(i.id)) : "+ quantité") + "</button>"
+  ) : "";
   return '<li class="item' + (on ? " on" : "") + (got ? " got" : "") + '">'
     + '<button type="button" class="tick" data-act="tick" data-id="' + esc(i.id) + '" aria-pressed="' + on + '">'
     + '<span class="box" aria-hidden="true"></span><span class="label"><span class="name">' + esc(i.name) + "</span>"
     + (sub ? '<span class="why">' + esc(sub) + "</span>" : "") + "</span></button>"
+    + stepper + qtyPill
     + (route ? "" : '<button type="button" class="more" data-act="edit-item" data-id="' + esc(i.id) + '" aria-label="Modifier ' + esc(i.name) + '">…</button>')
     + "</li>";
 }
@@ -932,6 +1031,40 @@ function openItemSheet(opts){
     };
     var del = root.querySelector("#is-del");
     if (del) del.onclick = function(){ var cur = itemById(id); if (!cur) { closeSheet(); return; } deleteItem(id); closeSheet(); commit(); toast(cur.name + " supprimé."); };
+  });
+}
+
+function openQtySheet(id){
+  var it = itemById(id); if (!it || !isNeeded(id)) return;
+  var cur = state.qtySpec[id], unit = cur ? cur.u : "", amount = cur ? cur.n : "";
+  openSheet('<h2 tabindex="-1" autofocus>Quantité : ' + esc(it.name) + "</h2>"
+    + '<label class="field"><span>Précision</span><select id="qs-unit">'
+    + '<option value=""' + (unit === "" ? " selected" : "") + '>Pas de précision</option>'
+    + '<option value="g"' + (unit === "g" ? " selected" : "") + '>Grammes (g)</option>'
+    + '<option value="ml"' + (unit === "ml" ? " selected" : "") + '>Millilitres (mL)</option>'
+    + '<option value="u"' + (unit === "u" ? " selected" : "") + '>Unités</option>'
+    + "</select></label>"
+    + '<label class="field" id="qs-amt-field"' + (unit ? "" : " hidden") + '><span>Quantité</span><input type="number" id="qs-amt" min="1" step="1" inputmode="numeric" value="' + (amount || "") + '"></label>'
+    + '<p class="err" id="qs-err" role="alert"></p>'
+    + '<div class="sheet-actions">' + (cur ? '<button class="btn danger" type="button" id="qs-clear">Retirer</button>' : "")
+    + '<button class="btn ghost" type="button" data-close>Annuler</button><button class="btn primary" type="button" id="qs-save">Enregistrer</button></div>',
+  function(root){
+    var selEl = root.querySelector("#qs-unit"), amtField = root.querySelector("#qs-amt-field"), amtInput = root.querySelector("#qs-amt");
+    selEl.onchange = function(){
+      var v = selEl.value; amtField.hidden = !v;
+      if (v && !amtInput.value) amtInput.value = v === "g" ? 500 : v === "ml" ? 250 : 1;
+      if (v) amtInput.focus();
+    };
+    root.querySelector("#qs-save").onclick = function(){
+      var v = selEl.value, err = root.querySelector("#qs-err");
+      if (!v) { delete state.qtySpec[id]; closeSheet(); commit(); return; }
+      var n = parseInt(amtInput.value, 10);
+      if (!n || n < 1) { err.textContent = "Indique une quantité valide."; return; }
+      state.qtySpec[id] = {n:n, u:v};
+      closeSheet(); commit();
+    };
+    var clearBtn = root.querySelector("#qs-clear");
+    if (clearBtn) clearBtn.onclick = function(){ delete state.qtySpec[id]; closeSheet(); commit(); toast("Quantité retirée."); };
   });
 }
 
@@ -1156,6 +1289,9 @@ document.addEventListener("click", function(e){
     case "tab": setTab(b.dataset.tab); break;
     case "mode": ui.mode = b.dataset.mode; renderList(); break;
     case "tick": toggleItem(id); break;
+    case "qty-inc": adjustQty(id, 1); break;
+    case "qty-dec": adjustQty(id, -1); break;
+    case "qty-edit": openQtySheet(id); break;
     case "edit-item": openItemSheet({id:id}); break;
     case "quick-add": quickAdd(); break;
     case "pick-item": pickItem(id); break;
@@ -1195,7 +1331,9 @@ $("#qa").addEventListener("blur", function(){ setTimeout(hideSugg, 150); });
 $("#new-aisle").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); addAisle(); } });
 
 setSync("local");
-if (prunePlan()) { state.updatedAt = Math.max(Date.now(), state.updatedAt + 1); saveLocal(); }
+var patched = applyCatalogPatch(state);
+if (prunePlan() || patched) { state.updatedAt = Math.max(Date.now(), state.updatedAt + 1); saveLocal(); }
+if (patched) toast("Catalogue mis à jour : 3 nouveaux repas, ail en poudre ajouté à la liste.");
 render();
 document.addEventListener("visibilitychange", function(){ if (!document.hidden && prunePlan()) commit(); else if (!document.hidden) renderPlan(); });
 initCloud();
