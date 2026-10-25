@@ -189,8 +189,8 @@ body[data-tab="meals"] .tip,body[data-tab="plan"] .tip{background:var(--card)}
 .csec-on{display:inline-flex;align-items:center;gap:3px;height:22px;padding:0 8px;border-radius:11px;background:color-mix(in srgb,var(--blue) 15%,transparent);color:var(--blue);font-size:0.765rem;font-weight:600;font-variant-numeric:tabular-nums}
 .csec-on svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .csec-c{min-width:16px;text-align:right}
-.csec-h svg{flex:none;width:13px;height:13px;fill:none;stroke:var(--label3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
-.csec.open .csec-h svg{transform:rotate(90deg)}
+.csec-h > svg{flex:none;width:13px;height:13px;fill:none;stroke:var(--label3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.csec.open .csec-h > svg{transform:rotate(90deg)}
 .csec-body{overflow:hidden;transition:height .38s cubic-bezier(.32,.72,0,1)}
 .csec-body > *{transition:opacity .3s ease}
 .csec-body .plain{padding-bottom:8px}
@@ -1523,13 +1523,14 @@ var qtyTimer = null;
 function closeQtyStepper(){
   clearTimeout(qtyTimer);
   if (!ui.qtyOpen) return;
-  var ae = document.activeElement;
-  if (sw || lp || cm || drag || idrag || openRow || (ae && ae.closest && ae.closest(".qty"))) { keepQtyOpen(); return; }
+  if (sw || lp || cm || drag || idrag || openRow) { keepQtyOpen(); return; }
+  var id = ui.qtyOpen, ae = document.activeElement, hadFocus = !!(ae && ae.closest && ae.closest(".qty"));
   ui.qtyOpen = null; renderList(); renderCatalog();
+  if (hadFocus) { var b = document.querySelector("#view-" + ui.tab + ' [data-act="qty-open"][data-id="' + id + '"]'); if (b) b.focus({preventScroll:true}); }
 }
-function keepQtyOpen(){ clearTimeout(qtyTimer); qtyTimer = setTimeout(closeQtyStepper, 3000); }
+function keepQtyOpen(ms){ clearTimeout(qtyTimer); qtyTimer = setTimeout(closeQtyStepper, ms || 1500); }
 function openQtyStepper(id){
-  ui.qtyOpen = id; renderList(); renderCatalog(); keepQtyOpen();
+  ui.qtyOpen = id; renderList(); renderCatalog(); keepQtyOpen(2500);
   focusQty("qty-inc", id);
 }
 function focusQty(act, id){
